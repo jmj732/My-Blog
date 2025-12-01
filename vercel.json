@@ -6,7 +6,6 @@
   "outputDirectory": ".next",
   "env": {
     "DATABASE_URL": "@ai_blog_database_url",
-    "NEXT_PUBLIC_SUPABASE_URL": "@ai_blog_supabase_url",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@ai_blog_supabase_anon_key",
     "AUTH_SECRET": "@ai_blog_auth_secret",
     "GITHUB_CLIENT_ID": "@ai_blog_github_client_id",

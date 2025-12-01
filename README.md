@@ -92,8 +92,7 @@ my-blog/
 2. **환경 변수 시크릿 등록**
    - Vercel에서 아래와 같이 시크릿을 만들어 `vercel.json`의 별칭과 연결합니다. CLI 예시:
      ```bash
-     vercel env add ai_blog_database_url production    # DATABASE_URL
-     vercel env add ai_blog_supabase_url production    # NEXT_PUBLIC_SUPABASE_URL
+     vercel env add ai_blog_supabase_url production
      vercel env add ai_blog_supabase_anon_key production
      vercel env add ai_blog_auth_secret production
      vercel env add ai_blog_github_client_id production
