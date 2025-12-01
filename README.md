@@ -83,33 +83,25 @@ my-blog/
 
 ## Vercel 자동 배포 설정
 
-프로젝트 루트에는 `vercel.json`과 GitHub Actions 워크플로우(`.github/workflows/vercel-deploy.yml`)가 포함되어 있어 Vercel과 연동하면 `main` 브랜치에 push 될 때마다 자동으로 프로덕션에 배포됩니다.
+프로젝트 루트에는 `vercel.json`이 포함되어 있어 Vercel GitHub Integration만 연결하면 `main` 브랜치 push 시 자동으로 프로덕션에 배포됩니다.
 
 1. **Vercel 프로젝트 생성 및 GitHub 연결**
-   - `vercel new` 또는 대시보드에서 GitHub 저장소를 Import합니다.
+   - 대시보드에서 “Add New → Project”를 선택해 이 저장소를 Import합니다.
    - `vercel.json` 덕분에 빌드(`npm run build`)와 출력(`.next`)은 자동으로 인식됩니다.
 
 2. **환경 변수 시크릿 등록**
-   - Vercel에서 아래와 같이 시크릿을 만들어 `vercel.json`의 별칭과 연결합니다. CLI 예시:
+   - Vercel에서 아래와 같이 별칭과 값을 연결합니다. (Production/Preview/Development 각각 추가)
      ```bash
-     vercel env add ai_blog_supabase_url production
-     vercel env add ai_blog_supabase_anon_key production
-     vercel env add ai_blog_auth_secret production
-     vercel env add ai_blog_github_client_id production
-     vercel env add ai_blog_github_client_secret production
-     vercel env add ai_blog_post_sync_token production
+     npx vercel env add ai_blog_database_url production      # DATABASE_URL
+     npx vercel env add ai_blog_supabase_url production      # NEXT_PUBLIC_SUPABASE_URL
+     npx vercel env add ai_blog_supabase_anon_key production
+     npx vercel env add ai_blog_auth_secret production
+     npx vercel env add ai_blog_github_client_id production
+     npx vercel env add ai_blog_github_client_secret production
+     npx vercel env add ai_blog_post_sync_token production   # 선택 사항
      ```
-   - Preview/Development 환경도 동일하게 추가해두면 Preview 배포에서도 정상 동작합니다.
+   - CLI 대신 대시보드(Project Settings → Environment Variables)에서 같은 이름으로 추가해도 됩니다.
 
-3. **GitHub Secrets 세팅**
-   - Vercel 대시보드에서 `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`를 확인하고, Personal Access Token(`vercel token`)을 생성합니다.
-   - GitHub 저장소에 아래 시크릿을 등록합니다.
-     - `VERCEL_ORG_ID`
-     - `VERCEL_PROJECT_ID`
-     - `VERCEL_TOKEN`
-
-4. **자동 배포**
-   - 이제 `main` 브랜치로 push 하면 `Deploy to Vercel` 워크플로우가 `vercel pull → vercel build → vercel deploy --prod` 순서로 실행되어 최신 빌드를 배포합니다.
-   - 필요 시 `workflow_dispatch`로 수동 실행도 가능합니다.
-
-배포 후에는 `/api/posts/sync`를 호출해 MDX 콘텐츠를 DB에 업로드하고, `/search` 페이지에서 벡터 검색이 작동하는지 확인하세요.
+3. **자동 배포 확인**
+   - GitHub Integration이 브랜치 푸시를 감지해 Preview/Production 배포를 생성합니다.
+   - 배포 후 `/api/posts/sync`를 호출해 MDX 콘텐츠를 DB에 업로드하고 `/search` 페이지에서 벡터 검색이 작동하는지 확인하세요.
