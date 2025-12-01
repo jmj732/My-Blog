@@ -1,9 +1,19 @@
 import { pipeline } from "@xenova/transformers";
 
-// Singleton pattern to avoid re-loading the model
-let embedder: any = null;
+type EmbeddingOptions = {
+    pooling?: "mean" | "cls";
+    normalize?: boolean;
+};
 
-async function getEmbedder() {
+type FeatureExtractionFn = (
+    text: string,
+    options?: EmbeddingOptions
+) => Promise<{ data: Float32Array | number[] }>;
+
+// Singleton pattern to avoid re-loading the model
+let embedder: FeatureExtractionFn | null = null;
+
+async function getEmbedder(): Promise<FeatureExtractionFn> {
     if (!embedder) {
         embedder = await pipeline(
             "feature-extraction",
