@@ -209,10 +209,105 @@
   }
 
   .glass-effect {
-    @apply bg-white/10 backdrop-blur-md border border-white/20;
+    @apply bg-white/80 backdrop-blur-md border border-black/5 shadow-sm;
   }
 
   .dark .glass-effect {
-    @apply bg-white/5 backdrop-blur-md border border-white/10;
+    @apply bg-white/10 backdrop-blur-md border border-white/10 shadow-none;
+  }
+}
+
+/* Novel Editor Styles */
+@layer components {
+  .novel-editor-wrapper {
+    @apply bg-background/50;
+  }
+
+  .novel-editor {
+    @apply text-foreground;
+  }
+
+  /* Slash command menu styling */
+  .novel-slash-command {
+    @apply bg-white dark:bg-zinc-900 backdrop-blur-md border border-border rounded-lg shadow-xl;
+  }
+
+  /* Bubble menu styling */
+  .novel-bubble-menu {
+    @apply bg-white dark:bg-zinc-900 backdrop-blur-md border border-border rounded-lg shadow-xl;
+  }
+
+  /* Editor content styling */
+  .ProseMirror {
+    @apply focus:outline-none;
+  }
+
+  .ProseMirror p.is-editor-empty:first-child::before {
+    @apply text-muted-foreground;
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
+
+  /* Headings */
+  .ProseMirror h1 {
+    @apply text-4xl font-bold mt-8 mb-4;
+  }
+
+  .ProseMirror h2 {
+    @apply text-3xl font-bold mt-6 mb-3;
+  }
+
+  .ProseMirror h3 {
+    @apply text-2xl font-bold mt-4 mb-2;
+  }
+
+  /* Lists */
+  .ProseMirror ul,
+  .ProseMirror ol {
+    @apply pl-6 my-4;
+  }
+
+  .ProseMirror li {
+    @apply my-2;
+  }
+
+  /* Code blocks */
+  .ProseMirror pre {
+    @apply bg-white/5 rounded-lg p-4 my-4 overflow-x-auto;
+  }
+
+  .ProseMirror code {
+    @apply bg-white/10 px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+
+  .ProseMirror pre code {
+    @apply bg-transparent p-0;
+  }
+
+  /* Blockquotes */
+  .ProseMirror blockquote {
+    @apply border-l-4 border-purple-500 pl-4 my-4 italic;
+  }
+
+  /* Links */
+  .ProseMirror a {
+    @apply text-purple-400 hover:text-purple-300 underline;
+  }
+
+  /* Images */
+  .ProseMirror img {
+    @apply rounded-lg my-4 max-w-full;
+  }
+
+  /* Horizontal rule */
+  .ProseMirror hr {
+    @apply border-white/20 my-8;
+  }
+
+  /* Selection */
+  .ProseMirror ::selection {
+    @apply bg-purple-500/30;
   }
 }
