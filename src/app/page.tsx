@@ -38,7 +38,7 @@ export default function Home() {
             Start Writing
             <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
           </Button>
-          <Button size="lg" variant="outline" className="glass-effect hover:bg-white/20 transition-all duration-300 hover:scale-105">
+          <Button size="lg" variant="outline" className="glass-effect hover:bg-accent transition-all duration-300 hover:scale-105">
             <Zap className="w-4 h-4 mr-2" />
             Explore Features
           </Button>
@@ -46,7 +46,7 @@ export default function Home() {
 
         {/* Feature cards */}
         <div className="grid w-full max-w-5xl grid-cols-1 gap-6 md:grid-cols-3 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-          <div className="p-6 rounded-2xl glass-effect hover:bg-white/10 transition-all duration-300 hover:scale-105 group">
+          <div className="p-6 rounded-2xl glass-effect hover:bg-accent/50 transition-all duration-300 hover:scale-105 group">
             <div className="flex items-center justify-center w-12 h-12 mb-4 rounded-xl bg-gradient-primary">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
@@ -56,7 +56,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl glass-effect hover:bg-white/10 transition-all duration-300 hover:scale-105 group">
+          <div className="p-6 rounded-2xl glass-effect hover:bg-accent/50 transition-all duration-300 hover:scale-105 group">
             <div className="flex items-center justify-center w-12 h-12 mb-4 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500">
               <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -68,7 +68,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl glass-effect hover:bg-white/10 transition-all duration-300 hover:scale-105 group">
+          <div className="p-6 rounded-2xl glass-effect hover:bg-accent/50 transition-all duration-300 hover:scale-105 group">
             <div className="flex items-center justify-center w-12 h-12 mb-4 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500">
               <Zap className="w-6 h-6 text-white" />
             </div>
