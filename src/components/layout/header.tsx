@@ -40,6 +40,9 @@ export async function Header() {
                     <Link href="/posts" className="hover:text-foreground">
                         Posts
                     </Link>
+                    <Link href="/write" className="hover:text-foreground">
+                        Write
+                    </Link>
                     <Link href="/about" className="hover:text-foreground">
                         About
                     </Link>
