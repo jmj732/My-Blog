@@ -6,13 +6,29 @@ import { Button } from "@/components/ui/button";
 import { SearchDialogButton } from "@/components/search/search-dialog-button";
 
 function getInitials(name?: string | null, email?: string | null) {
-    if (name && name.trim().length > 0) {
-        const [first, second] = name.trim().split(" ");
-        return (first?.[0] ?? "") + (second?.[0] ?? "");
+    const cleaned = name?.trim();
+    if (cleaned) {
+        // Multi-word names: take first letter of first two words
+        const parts = cleaned.split(/\s+/).filter(Boolean);
+        if (parts.length >= 2) {
+            return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
+        }
+
+        // Single token: try camelCase/PascalCase (e.g., ChoJaemin -> CJ)
+        const camelTokens = cleaned.split(/(?=[A-Z])/).filter(Boolean);
+        if (camelTokens.length >= 2) {
+            return `${camelTokens[0][0] ?? ""}${camelTokens[1][0] ?? ""}`.toUpperCase();
+        }
+
+        // Fallback: first two letters
+        return cleaned.slice(0, 2).toUpperCase();
     }
+
     if (email) {
-        return email.charAt(0).toUpperCase();
+        const local = email.split("@")[0] ?? "";
+        return local.slice(0, 2).toUpperCase() || "👤";
     }
+
     return "👤";
 }
 
@@ -68,11 +84,8 @@ export async function Header() {
                         <>
                             <div className="hidden text-right text-xs leading-tight text-muted-foreground sm:block">
                                 <p className="text-sm font-semibold text-foreground">
-                                    {user.name ?? "Reader"}
+                                    {user.name ?? user.email ?? "Reader"}
                                 </p>
-                            </div>
-                            <div className="flex h-9 w-9 items-center justify-center border border-border bg-muted text-sm font-semibold text-foreground rounded-none">
-                                {getInitials(user.name, user.email)}
                             </div>
                             <form
                                 action={async () => {
