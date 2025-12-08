@@ -21,33 +21,35 @@ export async function Header() {
     const user = session?.user;
 
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-white/10 backdrop-blur">
+        <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container flex h-16 items-center gap-6">
                 {/* Logo */}
                 <div className="flex">
                     <Link href="/" className="flex items-center space-x-2 group">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-primary text-lg font-bold text-white shadow-lg">
-                            ✨
+                        <div className="flex h-8 w-8 items-center justify-center bg-primary text-primary-foreground font-bold rounded-none">
+                            AI
                         </div>
-                        <span className="hidden text-xl font-bold text-gradient sm:inline-block">
-                            AI Blog
+                        <span className="hidden text-xl font-bold tracking-tighter sm:inline-block">
+                            Blog
                         </span>
                     </Link>
                 </div>
 
                 {/* Navigation */}
-                <nav className="hidden flex-1 items-center space-x-6 text-sm font-medium text-foreground/60 transition-colors md:flex">
-                    <Link href="/posts" className="hover:text-foreground">
-                        Posts
+                <nav className="hidden flex-1 items-center space-x-6 text-sm font-medium text-muted-foreground transition-colors md:flex">
+                    <Link href="/posts" className="hover:text-primary transition-colors">
+                        포스트
                     </Link>
-                    <Link href="/write" className="hover:text-foreground">
-                        Write
+                    {user?.email === process.env.ADMIN_EMAIL && (
+                        <Link href="/write" className="hover:text-primary transition-colors">
+                            글쓰기
+                        </Link>
+                    )}
+                    <Link href="/about" className="hover:text-primary transition-colors">
+                        소개
                     </Link>
-                    <Link href="/about" className="hover:text-foreground">
-                        About
-                    </Link>
-                    <Link href="/search" className="hover:text-foreground">
-                        Search
+                    <Link href="/search" className="hover:text-primary transition-colors">
+                        검색
                     </Link>
                 </nav>
 
@@ -57,7 +59,7 @@ export async function Header() {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="hover:bg-white/10 hover:scale-110 transition-all"
+                        className="hover:bg-muted transition-all rounded-none"
                     >
                         <Moon className="h-5 w-5" />
                     </Button>
@@ -65,12 +67,11 @@ export async function Header() {
                     {user ? (
                         <>
                             <div className="hidden text-right text-xs leading-tight text-muted-foreground sm:block">
-                                <p className="text-sm font-semibold text-white">
+                                <p className="text-sm font-semibold text-foreground">
                                     {user.name ?? "Reader"}
                                 </p>
-                                {user.email && <p>{user.email}</p>}
                             </div>
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-semibold text-white">
+                            <div className="flex h-9 w-9 items-center justify-center border border-border bg-muted text-sm font-semibold text-foreground rounded-none">
                                 {getInitials(user.name, user.email)}
                             </div>
                             <form
@@ -82,9 +83,9 @@ export async function Header() {
                                 <Button
                                     type="submit"
                                     variant="outline"
-                                    className="border-white/30 bg-white/10 text-white hover:bg-white/20"
+                                    className="border-border hover:bg-muted rounded-none"
                                 >
-                                    Sign out
+                                    로그아웃
                                 </Button>
                             </form>
                         </>
@@ -95,8 +96,8 @@ export async function Header() {
                                 await signIn("github");
                             }}
                         >
-                            <Button className="bg-gradient-primary text-white hover:opacity-90">
-                                Sign in
+                            <Button className="bg-primary text-primary-foreground hover:opacity-90 rounded-none font-bold">
+                                로그인
                             </Button>
                         </form>
                     )}

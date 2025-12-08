@@ -9,5 +9,9 @@ export default async function WritePage() {
         redirect("/api/auth/signin");
     }
 
+    if (session.user.email !== process.env.ADMIN_EMAIL) {
+        redirect("/");
+    }
+
     return <WritePageClient user={session.user} />;
 }

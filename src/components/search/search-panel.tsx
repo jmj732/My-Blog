@@ -111,14 +111,20 @@ export function SearchPanel({ initialQuery = "", autoFocus, onNavigate }: Search
     return (
         <div className="space-y-6">
             <div className="relative">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                {isLoading ? (
+                    <Loader2 className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-purple-400" />
+                ) : (
+                    <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                )}
                 <Input
                     ref={inputRef}
                     type="search"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder="Search posts, topics, or keywords..."
-                    className="h-14 rounded-2xl bg-white/5 pl-12 pr-4 text-lg"
+                    className={`h-14 rounded-2xl bg-white/5 pl-12 pr-4 text-lg transition-all ${
+                        isLoading ? "border-purple-500/30 ring-2 ring-purple-500/20" : ""
+                    }`}
                 />
             </div>
 
@@ -137,9 +143,30 @@ export function SearchPanel({ initialQuery = "", autoFocus, onNavigate }: Search
 
             <div className="space-y-3">
                 {isLoading && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Searching the knowledge base…
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-center gap-3 rounded-xl border border-purple-500/20 bg-gradient-to-br from-purple-500/10 to-transparent px-6 py-8">
+                            <Loader2 className="h-5 w-5 animate-spin text-purple-400" />
+                            <span className="text-sm font-medium text-purple-300">
+                                검색 중입니다...
+                            </span>
+                        </div>
+                        {/* Loading skeleton */}
+                        {[1, 2, 3].map((i) => (
+                            <div
+                                key={i}
+                                className="animate-pulse rounded-2xl border border-white/5 bg-gradient-to-br from-white/5 to-transparent p-5"
+                            >
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="h-3 w-24 rounded bg-white/10" />
+                                    <div className="h-5 w-20 rounded-full bg-white/10" />
+                                </div>
+                                <div className="mt-3 h-5 w-3/4 rounded bg-white/10" />
+                                <div className="mt-2 space-y-1">
+                                    <div className="h-3 w-full rounded bg-white/5" />
+                                    <div className="h-3 w-2/3 rounded bg-white/5" />
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
 

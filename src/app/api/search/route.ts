@@ -53,18 +53,16 @@ async function vectorSearch(embedding: number[], limit: number) {
         return [];
     }
 
-    const vectorLiteral = sql`ARRAY[${sql.join(
-        embedding.map((value) => sql`${value}`),
-        sql`, `
-    )}]::vector`;
+    // pgvector requires string representation: '[val1,val2,...]'
+    const vectorString = `[${embedding.join(',')}]`;
 
-    const { rows } = await db.execute(
+    const rows = await db.execute(
         sql`
             SELECT slug, title, content, created_at,
-                   1 - (embedding <=> ${vectorLiteral}) AS similarity
+                   1 - (embedding <=> ${vectorString}::vector) AS similarity
             FROM post
             WHERE embedding IS NOT NULL
-            ORDER BY embedding <=> ${vectorLiteral}
+            ORDER BY embedding <=> ${vectorString}::vector
             LIMIT ${limit}
         `
     );

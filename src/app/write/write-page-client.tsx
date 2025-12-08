@@ -11,6 +11,7 @@ import { Placeholder } from "novel";
 import { cx } from "class-variance-authority";
 import { SlashCommand, slashCommand, suggestionItems } from "./slash-command";
 
+// Note: Drag & drop is built into Novel's StarterKit via TipTap extensions
 const extensions = [
     StarterKit.configure({
         bulletList: {
@@ -30,7 +31,7 @@ const extensions = [
         },
         blockquote: {
             HTMLAttributes: {
-                class: cx("border-l-4 border-purple-500 pl-4"),
+                class: cx("border-l-4 border-primary pl-4"),
             },
         },
         codeBlock: {
@@ -46,7 +47,7 @@ const extensions = [
         },
         horizontalRule: false,
         dropcursor: {
-            color: "#a855f7",
+            color: "#ccff00",
             width: 4,
         },
         gapcursor: false,
@@ -108,21 +109,18 @@ export function WritePageClient({ user }: WritePageClientProps) {
     };
 
     return (
-        <div className="relative min-h-screen">
-            {/* Animated background */}
-            <div className="absolute inset-0 bg-gradient-primary animate-gradient opacity-5 blur-3xl"></div>
-
+        <div className="relative min-h-screen bg-background">
             <div className="container relative z-10 py-8">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
                         <Link href="/">
-                            <Button variant="ghost" size="icon" className="hover:bg-accent">
+                            <Button variant="ghost" size="icon" className="hover:bg-muted">
                                 <ArrowLeft className="w-5 h-5" />
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-3xl font-bold text-gradient">새 글 작성</h1>
+                            <h1 className="text-3xl font-bold uppercase tracking-tight">새 글 작성</h1>
                             <p className="text-sm text-muted-foreground">
                                 {user?.name || user?.email || "Guest"}님, 환영합니다!
                             </p>
@@ -131,7 +129,7 @@ export function WritePageClient({ user }: WritePageClientProps) {
 
                     <div className="flex items-center gap-2">
                         <Button
-                            className="bg-gradient-primary text-white hover:opacity-90"
+                            className="bg-primary text-primary-foreground hover:opacity-90 rounded-none font-bold"
                             onClick={handleSave}
                             disabled={isSaving}
                         >
@@ -166,7 +164,7 @@ export function WritePageClient({ user }: WritePageClientProps) {
                                 placeholder="태그를 쉼표로 구분하여 입력하세요 (예: React, TypeScript, Web)"
                                 value={tags}
                                 onChange={(e) => setTags(e.target.value)}
-                                className="glass-effect border-border"
+                                className="border-border bg-card"
                             />
                         </div>
 
@@ -178,10 +176,10 @@ export function WritePageClient({ user }: WritePageClientProps) {
                                 </label>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                     <Sparkles className="w-3 h-3" />
-                                    <span>/ 를 입력하여 블록 추가</span>
+                                    <span>/ 를 입력하여 블록 추가 • 블록을 드래그하여 이동</span>
                                 </div>
                             </div>
-                            <div className="novel-editor-wrapper glass-effect border border-border rounded-xl overflow-hidden">
+                            <div className="novel-editor-wrapper border-2 border-border bg-card overflow-hidden">
                                 <EditorRoot>
                                     <EditorContent
                                         initialContent={content}
@@ -203,16 +201,17 @@ export function WritePageClient({ user }: WritePageClientProps) {
                         </div>
 
                         {/* Writing tips */}
-                        <div className="p-4 rounded-xl glass-effect border border-purple-500/20">
+                        <div className="p-4 border border-border bg-muted">
                             <div className="flex items-start gap-3">
-                                <Sparkles className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
+                                <Sparkles className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                                 <div>
-                                    <h3 className="font-semibold mb-1">글쓰기 팁</h3>
+                                    <h3 className="font-bold mb-1 uppercase tracking-tight">글쓰기 팁</h3>
                                     <ul className="text-sm text-muted-foreground space-y-1">
-                                        <li>• <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded">/</kbd> 를 입력하면 블록 메뉴가 나타납니다</li>
+                                        <li>• <kbd className="px-1.5 py-0.5 text-xs bg-background border border-border">/ </kbd> 를 입력하면 블록 메뉴가 나타납니다</li>
+                                        <li>• <kbd className="px-1.5 py-0.5 text-xs bg-background border border-border">↑</kbd> <kbd className="px-1.5 py-0.5 text-xs bg-background border border-border">↓</kbd> 화살표로 메뉴 탐색</li>
+                                        <li>• 각 블록 왼쪽의 드래그 핸들로 블록을 재정렬</li>
                                         <li>• 텍스트를 선택하면 포맷팅 메뉴가 나타납니다</li>
                                         <li>• 마크다운 문법이 자동으로 변환됩니다</li>
-                                        <li>• 이미지를 드래그 앤 드롭하여 추가할 수 있습니다</li>
                                     </ul>
                                 </div>
                             </div>

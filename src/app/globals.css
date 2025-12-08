@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  /* Container centering - this fixes the layout issue */
+  /* Container centering */
   --container-center: true;
   --container-padding: 1rem;
 
@@ -48,64 +48,69 @@
 }
 
 :root {
-  --radius: 0.75rem;
+  --radius: 0rem; /* Sharper corners for modern tech look */
 
-  /* Vibrant gradient theme - using HSL for better Tailwind compatibility */
+  /* Light mode: White background, Black text, Lime accent */
   --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
+  --foreground: 0 0% 0%;
 
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+  --card-foreground: 0 0% 0%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
+  --popover-foreground: 0 0% 0%;
 
-  /* Rich purple-blue gradient colors */
-  --primary: 258 90% 66%;
-  --primary-foreground: 0 0% 100%;
+  /* Neon Lime Green */
+  --primary: 84 100% 59%;
+  --primary-foreground: 0 0% 0%;
 
-  --secondary: 330 81% 60%;
+  /* Black secondary */
+  --secondary: 0 0% 0%;
   --secondary-foreground: 0 0% 100%;
 
-  --accent: 217 91% 60%;
-  --accent-foreground: 0 0% 100%;
+  /* Light Grey accent */
+  --accent: 0 0% 96%;
+  --accent-foreground: 0 0% 0%;
 
-  --muted: 210 40% 98%;
-  --muted-foreground: 215 16% 47%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 40%;
 
   --destructive: 0 84% 60%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 258 90% 66%;
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --ring: 84 100% 59%;
 }
 
 .dark {
-  /* Dark mode with rich deep colors */
-  --background: 240 21% 6%;
-  --foreground: 210 40% 98%;
+  /* Dark mode: Black background, White text, Lime accent */
+  --background: 0 0% 5%;
+  --foreground: 0 0% 100%;
 
-  --card: 222 47% 11%;
-  --card-foreground: 210 40% 98%;
+  --card: 0 0% 8%;
+  --card-foreground: 0 0% 100%;
 
-  --popover: 222 47% 11%;
-  --popover-foreground: 210 40% 98%;
+  --popover: 0 0% 8%;
+  --popover-foreground: 0 0% 100%;
 
-  --primary: 258 90% 76%;
-  --primary-foreground: 222 47% 11%;
+  /* Neon Lime Green */
+  --primary: 84 100% 59%;
+  --primary-foreground: 0 0% 0%;
 
-  --secondary: 330 81% 71%;
-  --secondary-foreground: 222 47% 11%;
+  /* White secondary */
+  --secondary: 0 0% 100%;
+  --secondary-foreground: 0 0% 0%;
 
-  --accent: 217 91% 68%;
-  --accent-foreground: 222 47% 11%;
+  /* Dark Grey accent */
+  --accent: 0 0% 15%;
+  --accent-foreground: 0 0% 100%;
 
-  --muted: 217 33% 17%;
-  --muted-foreground: 215 20% 65%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 60%;
 
-  --destructive: 0 84% 73%;
-  --border: 217 33% 17%;
-  --input: 217 33% 17%;
-  --ring: 258 90% 76%;
+  --destructive: 0 84% 60%;
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --ring: 84 100% 59%;
 }
 
 @layer base {
@@ -118,7 +123,6 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  /* Container centering - critical fix for layout */
   .container {
     margin-left: auto;
     margin-right: auto;
@@ -126,118 +130,57 @@
     padding-right: 1rem;
   }
 
-  /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
   }
 
-  /* Custom animations */
-  @keyframes gradient-shift {
-
-    0%,
-    100% {
-      background-position: 0% 50%;
-    }
-
-    50% {
-      background-position: 100% 50%;
-    }
-  }
-
+  /* Simplified animations */
   @keyframes fade-in-up {
     from {
       opacity: 0;
       transform: translateY(20px);
     }
-
     to {
       opacity: 1;
       transform: translateY(0);
     }
   }
 
-  @keyframes float {
-
-    0%,
-    100% {
-      transform: translateY(0px);
-    }
-
-    50% {
-      transform: translateY(-10px);
-    }
-  }
-
-  @keyframes glow {
-
-    0%,
-    100% {
-      opacity: 1;
-    }
-
-    50% {
-      opacity: 0.5;
-    }
-  }
-
-  .animate-gradient {
-    background-size: 200% 200%;
-    animation: gradient-shift 8s ease infinite;
-  }
-
   .animate-fade-in-up {
     animation: fade-in-up 0.6s ease-out;
   }
-
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
-  }
-
-  .animate-glow {
-    animation: glow 2s ease-in-out infinite;
-  }
 }
 
-/* Custom utility classes */
 @layer utilities {
+  /* Updated utilities for the new theme */
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500;
+    @apply text-foreground; /* Removed gradient text, kept class for compatibility */
   }
 
   .bg-gradient-primary {
-    @apply bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500;
+    @apply bg-primary text-primary-foreground; /* Solid Lime background */
   }
 
   .glass-effect {
-    @apply bg-white/80 backdrop-blur-md border border-black/5 shadow-sm;
-  }
-
-  .dark .glass-effect {
-    @apply bg-white/10 backdrop-blur-md border border-white/10 shadow-none;
+    @apply bg-background/80 backdrop-blur-sm border border-border; /* Cleaner glass */
   }
 }
 
 /* Novel Editor Styles */
 @layer components {
   .novel-editor-wrapper {
-    @apply bg-background/50;
+    @apply bg-background border border-border;
   }
 
   .novel-editor {
     @apply text-foreground;
   }
 
-  /* Slash command menu styling */
-  .novel-slash-command {
-    @apply bg-white dark:bg-zinc-900 backdrop-blur-md border border-border rounded-lg shadow-xl;
-  }
-
-  /* Bubble menu styling */
+  .novel-slash-command,
   .novel-bubble-menu {
-    @apply bg-white dark:bg-zinc-900 backdrop-blur-md border border-border rounded-lg shadow-xl;
+    @apply bg-popover text-popover-foreground border border-border rounded-none shadow-xl;
   }
 
-  /* Editor content styling */
   .ProseMirror {
     @apply focus:outline-none;
   }
@@ -250,64 +193,38 @@
     pointer-events: none;
   }
 
-  /* Headings */
-  .ProseMirror h1 {
-    @apply text-4xl font-bold mt-8 mb-4;
-  }
+  .ProseMirror h1 { @apply text-4xl font-bold mt-8 mb-4 tracking-tight; }
+  .ProseMirror h2 { @apply text-3xl font-bold mt-6 mb-3 tracking-tight; }
+  .ProseMirror h3 { @apply text-2xl font-bold mt-4 mb-2 tracking-tight; }
 
-  .ProseMirror h2 {
-    @apply text-3xl font-bold mt-6 mb-3;
-  }
+  .ProseMirror ul, .ProseMirror ol { @apply pl-6 my-4; }
+  .ProseMirror li { @apply my-2; }
 
-  .ProseMirror h3 {
-    @apply text-2xl font-bold mt-4 mb-2;
-  }
-
-  /* Lists */
-  .ProseMirror ul,
-  .ProseMirror ol {
-    @apply pl-6 my-4;
-  }
-
-  .ProseMirror li {
-    @apply my-2;
-  }
-
-  /* Code blocks */
   .ProseMirror pre {
-    @apply bg-white/5 rounded-lg p-4 my-4 overflow-x-auto;
+    @apply bg-muted rounded-none p-4 my-4 overflow-x-auto border border-border;
   }
 
   .ProseMirror code {
-    @apply bg-white/10 px-1.5 py-0.5 rounded text-sm font-mono;
+    @apply bg-muted px-1.5 py-0.5 rounded-none text-sm font-mono;
   }
 
-  .ProseMirror pre code {
-    @apply bg-transparent p-0;
-  }
-
-  /* Blockquotes */
   .ProseMirror blockquote {
-    @apply border-l-4 border-purple-500 pl-4 my-4 italic;
+    @apply border-l-4 border-primary pl-4 my-4 italic;
   }
 
-  /* Links */
   .ProseMirror a {
-    @apply text-purple-400 hover:text-purple-300 underline;
+    @apply text-primary hover:underline decoration-2 underline-offset-4;
   }
 
-  /* Images */
   .ProseMirror img {
-    @apply rounded-lg my-4 max-w-full;
+    @apply rounded-none my-4 max-w-full border border-border;
   }
 
-  /* Horizontal rule */
   .ProseMirror hr {
-    @apply border-white/20 my-8;
+    @apply border-border my-8;
   }
 
-  /* Selection */
   .ProseMirror ::selection {
-    @apply bg-purple-500/30;
+    @apply bg-primary/30;
   }
 }
