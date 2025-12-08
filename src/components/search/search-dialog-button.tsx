@@ -21,7 +21,7 @@ export function SearchDialogButton() {
                     variant="ghost"
                     size="icon"
                     className="hover:bg-white/10 hover:scale-110 transition-all"
-                    aria-label="Open search"
+                    aria-label="검색 열기"
                 >
                     <Search className="h-5 w-5" />
                 </Button>

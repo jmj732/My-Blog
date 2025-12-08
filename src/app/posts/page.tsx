@@ -1,74 +1,137 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, PenTool } from "lucide-react";
+import { ArrowRight, PenTool, ChevronLeft, ChevronRight } from "lucide-react";
+import { getPosts } from "@/lib/posts";
+import { Button } from "@/components/ui/button";
 
-import { getAllPosts } from "@/lib/mdx";
-
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
+const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
     year: "numeric",
-    month: "short",
+    month: "long",
     day: "numeric",
 });
 
 export const metadata: Metadata = {
-    title: "All Posts | AI Blog",
-    description: "Browse every MDX article published on the AI-powered blog.",
+    title: "전체 포스트 | AI Blog",
+    description: "AI 기반 블로그에 게시된 모든 아티클을 찾아보세요.",
 };
 
-export default function PostsPage() {
-    const posts = getAllPosts();
+interface PostsPageProps {
+    searchParams: Promise<{ page?: string }>;
+}
+
+export default async function PostsPage({ searchParams }: PostsPageProps) {
+    const params = await searchParams;
+    const currentPage = Number(params.page) || 1;
+    const { posts, total, totalPages } = await getPosts(currentPage, 20);
 
     return (
         <section className="container py-16 md:py-24">
             <div className="mx-auto max-w-3xl text-center">
-                <div className="inline-flex items-center gap-2 rounded-full glass-effect px-4 py-2 text-sm font-medium text-purple-500">
+                <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-4 py-2 text-sm font-bold uppercase tracking-wide">
                     <PenTool className="h-4 w-4" />
-                    Latest Insights
+                    최신 인사이트
                 </div>
-                <h1 className="mt-6 text-4xl font-bold tracking-tight md:text-5xl">
-                    Featured Posts
+                <h1 className="mt-6 text-4xl font-bold tracking-tight md:text-5xl uppercase">
+                    전체 포스트
                 </h1>
                 <p className="mt-4 text-lg text-muted-foreground">
-                    Long-form thoughts about AI-assisted writing, developer productivity, and design systems.
+                    총 <span className="font-bold text-primary">{total.toLocaleString()}</span>개의 포스트
                 </p>
             </div>
 
-            <div className="mt-12 grid gap-6">
+            <div className="mt-12 grid gap-6 max-w-4xl mx-auto">
                 {posts.length === 0 && (
-                    <div className="rounded-2xl border border-dashed border-white/10 p-10 text-center text-muted-foreground glass-effect">
-                        No posts yet. Add MDX files under <code className="rounded bg-muted px-2 py-1">content/posts</code> to see them listed here.
+                    <div className="border border-border bg-muted p-10 text-center">
+                        아직 포스트가 없습니다.
                     </div>
                 )}
 
                 {posts.map((post) => (
                     <Link
-                        key={post.slug}
+                        key={post.id}
                         href={`/posts/${post.slug}`}
-                        className="group rounded-2xl border border-white/5 bg-gradient-to-br from-white/5 to-white/[0.02] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.08]"
+                        className="group border-2 border-border bg-card p-6 transition-all duration-300 hover:border-primary"
                     >
                         <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                            <span className="rounded-full bg-white/5 px-3 py-1">
-                                {dateFormatter.format(new Date(post.date))}
+                            <span className="border border-border bg-muted px-3 py-1 font-mono text-xs" suppressHydrationWarning>
+                                {post.createdAt ? dateFormatter.format(new Date(post.createdAt)) : "날짜 없음"}
                             </span>
-                            <span className="font-mono uppercase tracking-wide text-xs text-purple-400">
-                                MDX
+                            <span className="font-mono uppercase tracking-wide text-xs text-primary font-bold">
+                                DB
                             </span>
                         </div>
-                        <h2 className="mt-4 text-2xl font-semibold tracking-tight text-white">
+                        <h2 className="mt-4 text-2xl font-bold tracking-tight group-hover:text-primary transition-colors">
                             {post.title}
                         </h2>
-                        {post.description && (
-                            <p className="mt-3 text-base text-muted-foreground">
-                                {post.description}
-                            </p>
-                        )}
-                        <div className="mt-6 inline-flex items-center text-sm font-semibold text-purple-400 transition-all group-hover:gap-3 group-hover:text-white">
-                            Read article
+                        <div className="mt-6 inline-flex items-center text-sm font-bold uppercase tracking-wide text-foreground transition-all group-hover:gap-3 group-hover:text-primary">
+                            아티클 읽기
                             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </div>
                     </Link>
                 ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="mt-12 flex items-center justify-center gap-2">
+                    <Link
+                        href={`/posts?page=${currentPage - 1}`}
+                        className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+                    >
+                        <Button
+                            variant="outline"
+                            disabled={currentPage <= 1}
+                            className="border-2 border-border hover:border-primary rounded-none"
+                        >
+                            <ChevronLeft className="w-4 h-4 mr-2" />
+                            이전
+                        </Button>
+                    </Link>
+
+                    <div className="flex items-center gap-2">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let pageNum;
+                            if (totalPages <= 5) {
+                                pageNum = i + 1;
+                            } else if (currentPage <= 3) {
+                                pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                                pageNum = totalPages - 4 + i;
+                            } else {
+                                pageNum = currentPage - 2 + i;
+                            }
+
+                            return (
+                                <Link key={pageNum} href={`/posts?page=${pageNum}`}>
+                                    <Button
+                                        variant={currentPage === pageNum ? "default" : "outline"}
+                                        className={`w-10 h-10 rounded-none border-2 ${currentPage === pageNum
+                                            ? "bg-primary text-primary-foreground border-primary"
+                                            : "border-border hover:border-primary"
+                                            }`}
+                                    >
+                                        {pageNum}
+                                    </Button>
+                                </Link>
+                            );
+                        })}
+                    </div>
+
+                    <Link
+                        href={`/posts?page=${currentPage + 1}`}
+                        className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+                    >
+                        <Button
+                            variant="outline"
+                            disabled={currentPage >= totalPages}
+                            className="border-2 border-border hover:border-primary rounded-none"
+                        >
+                            다음
+                            <ChevronRight className="w-4 h-4 ml-2" />
+                        </Button>
+                    </Link>
+                </div>
+            )}
         </section>
     );
 }

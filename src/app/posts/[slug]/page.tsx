@@ -1,67 +1,67 @@
-import type { AnchorHTMLAttributes, HTMLAttributes } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { MDXRemote } from "next-mdx-remote/rsc";
-
-import { getAllPosts, getPostBySlug, type Post } from "@/lib/mdx";
+import { getPostBySlug } from "@/lib/posts";
+import CommentSection from "@/components/comments/comment-section";
 
 type ParamsPromise = Promise<{ slug: string }>;
 
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
+const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
     year: "numeric",
     month: "long",
     day: "numeric",
 });
 
-const mdxComponents = {
-    h1: (props: HTMLAttributes<HTMLHeadingElement>) => (
-        <h1 className="mt-8 text-4xl font-bold tracking-tight" {...props} />
-    ),
-    h2: (props: HTMLAttributes<HTMLHeadingElement>) => (
-        <h2 className="mt-10 text-3xl font-semibold tracking-tight" {...props} />
-    ),
-    h3: (props: HTMLAttributes<HTMLHeadingElement>) => (
-        <h3 className="mt-8 text-2xl font-semibold tracking-tight" {...props} />
-    ),
-    p: (props: HTMLAttributes<HTMLParagraphElement>) => (
-        <p className="mt-6 leading-relaxed text-muted-foreground" {...props} />
-    ),
-    a: (props: AnchorHTMLAttributes<HTMLAnchorElement>) => (
-        <a
-            className="font-semibold text-purple-400 underline-offset-4 hover:text-white hover:underline"
-            {...props}
-        />
-    ),
-    ul: (props: HTMLAttributes<HTMLUListElement>) => (
-        <ul className="mt-6 list-disc space-y-2 pl-6 text-muted-foreground" {...props} />
-    ),
-    ol: (props: HTMLAttributes<HTMLOListElement>) => (
-        <ol className="mt-6 list-decimal space-y-2 pl-6 text-muted-foreground" {...props} />
-    ),
-    code: (props: HTMLAttributes<HTMLElement>) => (
-        <code className="rounded bg-white/10 px-1.5 py-0.5 text-sm" {...props} />
-    ),
-    pre: (props: HTMLAttributes<HTMLPreElement>) => (
-        <pre
-            className="mt-6 overflow-x-auto rounded-2xl border border-white/10 bg-black/60 p-4 text-sm text-white/90"
-            {...props}
-        />
-    ),
-    blockquote: (props: HTMLAttributes<HTMLElement>) => (
-        <blockquote
-            className="mt-8 border-l-4 border-purple-500/60 bg-white/5 px-6 py-4 text-lg italic text-muted-foreground"
-            {...props}
-        />
-    ),
-    hr: (props: HTMLAttributes<HTMLHRElement>) => (
-        <hr className="my-10 border-white/10" {...props} />
-    ),
-};
+// Helper to render Novel JSON content  
+function renderNovelContent(jsonString: string) {
+    try {
+        const content = JSON.parse(jsonString);
+        if (!content.content) return null;
 
-export async function generateStaticParams() {
-    return getAllPosts().map((post) => ({ slug: post.slug }));
+        return content.content.map((node: any, idx: number) => {
+            if (node.type === "heading") {
+                const text = node.content?.[0]?.text || "";
+                const level = node.attrs.level;
+                const sizeClasses: Record<number, string> = {
+                    1: "text-4xl font-black uppercase tracking-tighter mt-8",
+                    2: "text-3xl font-bold uppercase tracking-tight mt-10",
+                    3: "text-2xl font-bold uppercase tracking-tight mt-8",
+                };
+
+                if (level === 1) return <h1 key={idx} className={sizeClasses[1]}>{text}</h1>;
+                if (level === 2) return <h2 key={idx} className={sizeClasses[2]}>{text}</h2>;
+                if (level === 3) return <h3 key={idx} className={sizeClasses[3]}>{text}</h3>;
+            }
+
+            if (node.type === "paragraph") {
+                const text = node.content?.[0]?.text || "";
+                return <p key={idx} className="mt-6 leading-relaxed text-muted-foreground">{text}</p>;
+            }
+
+            if (node.type === "codeBlock") {
+                const code = node.content?.[0]?.text || "";
+                return (
+                    <pre key={idx} className="mt-6 overflow-x-auto border-2 border-border bg-muted p-4 text-sm font-mono">
+                        <code>{code}</code>
+                    </pre>
+                );
+            }
+
+            if (node.type === "blockquote") {
+                const text = node.content?.[0]?.content?.[0]?.text || "";
+                return (
+                    <blockquote key={idx} className="mt-8 border-l-4 border-primary bg-muted px-6 py-4 text-lg italic">
+                        {text}
+                    </blockquote>
+                );
+            }
+
+            return null;
+        });
+    } catch {
+        return <p className="text-muted-foreground">콘텐츠를 표시할 수 없습니다.</p>;
+    }
 }
 
 export async function generateMetadata({
@@ -69,66 +69,56 @@ export async function generateMetadata({
 }: {
     params: ParamsPromise;
 }): Promise<Metadata> {
-    try {
-        const { slug } = await params;
-        const post = getPostBySlug(slug);
+    const { slug } = await params;
+    const post = await getPostBySlug(slug);
+
+    if (!post) {
         return {
-            title: `${post.title} | AI Blog`,
-            description: post.description,
-            openGraph: {
-                title: post.title,
-                description: post.description,
-                type: "article",
-            },
-        };
-    } catch {
-        return {
-            title: "Post not found",
+            title: "포스트를 찾을 수 없습니다",
         };
     }
+
+    return {
+        title: `${post.title} | AI Blog`,
+        openGraph: {
+            title: post.title,
+            type: "article",
+        },
+    };
 }
 
 export default async function PostPage({ params }: { params: ParamsPromise }) {
     const { slug } = await params;
+    const post = await getPostBySlug(slug);
 
-    let postData: Post | undefined;
-    try {
-        postData = getPostBySlug(slug);
-    } catch {
+    if (!post) {
         notFound();
     }
-
-    if (!postData) {
-        notFound();
-    }
-
-    const post = postData;
 
     return (
         <article className="container max-w-3xl py-16">
             <Link
                 href="/posts"
-                className="inline-flex items-center text-sm text-muted-foreground transition hover:text-white"
+                className="inline-flex items-center text-sm text-muted-foreground transition hover:text-primary font-bold"
             >
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to posts
+                포스트 목록으로
             </Link>
 
             <header className="mt-6 space-y-4">
-                <p className="text-sm font-mono uppercase tracking-widest text-purple-400">
-                    {dateFormatter.format(new Date(post.date))}
+                <p className="text-sm font-mono uppercase tracking-widest text-primary font-bold" suppressHydrationWarning>
+                    {post.createdAt ? dateFormatter.format(new Date(post.createdAt)) : "날짜 없음"}
                 </p>
-                <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
+                <h1 className="text-4xl font-black tracking-tighter md:text-5xl uppercase">
                     {post.title}
                 </h1>
-                {post.description && (
-                    <p className="text-lg text-muted-foreground">{post.description}</p>
-                )}
             </header>
 
-            <div className="mt-10 border-t border-white/10 pt-10 text-lg leading-relaxed">
-                <MDXRemote source={post.content} components={mdxComponents} />
+            <div className="mt-10 border-t-2 border-border pt-10 leading-relaxed">
+                {renderNovelContent(post.content)}
             </div>
+
+            <CommentSection postId={post.id} />
         </article>
     );
 }

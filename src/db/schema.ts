@@ -6,7 +6,10 @@ import {
     primaryKey,
     integer,
     vector,
+    index,
+    boolean,
 } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import type { AdapterAccount } from "next-auth/adapters";
 
 export const posts = pgTable("post", {
@@ -18,7 +21,9 @@ export const posts = pgTable("post", {
     content: text("content").notNull(),
     embedding: vector("embedding", { dimensions: 384 }),
     createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+    createdAtIdx: index("post_created_at_idx").on(table.createdAt),
+}));
 
 export const users = pgTable("user", {
     id: text("id")
@@ -75,3 +80,35 @@ export const verificationTokens = pgTable(
         }),
     })
 );
+
+export const comments = pgTable("comment", {
+    id: text("id")
+        .primaryKey()
+        .$defaultFn(() => crypto.randomUUID()),
+    postId: text("post_id")
+        .notNull()
+        .references(() => posts.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+        .notNull()
+        .references(() => users.id, { onDelete: "cascade" }),
+    parentId: text("parent_id").references((): any => comments.id, { onDelete: "cascade" }),
+    content: text("content").notNull(),
+    isDeleted: boolean("is_deleted").notNull().default(false),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+    postIdIdx: index("comment_post_id_idx").on(table.postId),
+    parentIdIdx: index("comment_parent_id_idx").on(table.parentId),
+}));
+
+export const commentsRelations = relations(comments, ({ one }) => ({
+    user: one(users, {
+        fields: [comments.userId],
+        references: [users.id],
+    }),
+    post: one(posts, {
+        fields: [comments.postId],
+        references: [posts.id],
+    }),
+}));
+

@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
     try {
         const session = await auth();
-        if (!session?.user) {
+        if (!session?.user || session.user.email !== process.env.ADMIN_EMAIL) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
