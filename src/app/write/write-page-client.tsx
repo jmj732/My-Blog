@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Save, Sparkles } from "lucide-react";
+import { ArrowLeft, Save, Sparkles, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { EditorRoot, EditorContent, type JSONContent } from "novel";
 import { StarterKit } from "novel";
@@ -64,13 +65,40 @@ interface WritePageClientProps {
         email?: string | null;
         image?: string | null;
     };
+    initialPost?: {
+        slug: string;
+        title: string;
+        content: string;
+    };
 }
 
-export function WritePageClient({ user }: WritePageClientProps) {
-    const [title, setTitle] = useState("");
-    const [content, setContent] = useState<JSONContent | undefined>();
+function parseInitialContent(raw?: string): JSONContent | undefined {
+    if (!raw) return undefined;
+    try {
+        return JSON.parse(raw);
+    } catch {
+        return undefined;
+    }
+}
+
+export function WritePageClient({ user, initialPost }: WritePageClientProps) {
+    const router = useRouter();
+    const [title, setTitle] = useState(initialPost?.title ?? "");
+    const [content, setContent] = useState<JSONContent | undefined>(
+        parseInitialContent(initialPost?.content)
+    );
     const [tags, setTags] = useState("");
     const [isSaving, setIsSaving] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const isEditing = Boolean(initialPost);
+
+    useEffect(() => {
+        if (initialPost) {
+            setTitle(initialPost.title);
+            setContent(parseInitialContent(initialPost.content));
+        }
+    }, [initialPost]);
 
     const handleSave = async () => {
         if (!title || !content) {
@@ -80,8 +108,10 @@ export function WritePageClient({ user }: WritePageClientProps) {
 
         setIsSaving(true);
         try {
-            const response = await fetch("/api/posts", {
-                method: "POST",
+            const isEdit = Boolean(isEditing && initialPost?.slug);
+            const endpoint = isEdit ? `/api/posts/${initialPost?.slug}` : "/api/posts";
+            const response = await fetch(endpoint, {
+                method: isEdit ? "PATCH" : "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -97,14 +127,37 @@ export function WritePageClient({ user }: WritePageClientProps) {
             }
 
             const data = await response.json();
-            alert("글이 성공적으로 저장되었습니다!");
-            // Optional: Redirect to the new post
-            // window.location.href = `/posts/${data.slug}`;
+            alert(isEdit ? "글이 수정되었습니다!" : "글이 성공적으로 저장되었습니다!");
+            router.push(`/posts/${data.slug ?? initialPost?.slug}`);
         } catch (error) {
             console.error("Save failed:", error);
             alert("저장에 실패했습니다. 다시 시도해주세요.");
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!initialPost?.slug) return;
+        if (!confirm("정말로 이 글을 삭제하시겠습니까?")) return;
+
+        setIsDeleting(true);
+        try {
+            const response = await fetch(`/api/posts/${initialPost.slug}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to delete post");
+            }
+
+            alert("글이 삭제되었습니다.");
+            router.push("/posts");
+        } catch (error) {
+            console.error("Delete failed:", error);
+            alert("삭제에 실패했습니다. 다시 시도해주세요.");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -120,7 +173,9 @@ export function WritePageClient({ user }: WritePageClientProps) {
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-3xl font-bold uppercase tracking-tight">새 글 작성</h1>
+                            <h1 className="text-3xl font-bold uppercase tracking-tight">
+                                {isEditing ? "글 수정" : "새 글 작성"}
+                            </h1>
                             <p className="text-sm text-muted-foreground">
                                 {user?.name || user?.email || "Guest"}님, 환영합니다!
                             </p>
@@ -128,13 +183,24 @@ export function WritePageClient({ user }: WritePageClientProps) {
                     </div>
 
                     <div className="flex items-center gap-2">
+                        {isEditing && (
+                            <Button
+                                variant="destructive"
+                                className="rounded-none"
+                                onClick={handleDelete}
+                                disabled={isDeleting || isSaving}
+                            >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                {isDeleting ? "삭제 중..." : "삭제"}
+                            </Button>
+                        )}
                         <Button
                             className="bg-primary text-primary-foreground hover:opacity-90 rounded-none font-bold"
                             onClick={handleSave}
-                            disabled={isSaving}
+                            disabled={isSaving || isDeleting}
                         >
                             <Save className="w-4 h-4 mr-2" />
-                            {isSaving ? "저장 중..." : "저장"}
+                            {isSaving ? "저장 중..." : isEditing ? "수정" : "저장"}
                         </Button>
                     </div>
                 </div>
