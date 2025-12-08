@@ -25,7 +25,7 @@ export default function CommentItem({
     const [isEditing, setIsEditing] = useState(false);
 
     const isOwner = currentUserId === comment.userId;
-    const isDeleted = comment.isDeleted === 1;
+    const isDeleted = !!comment.isDeleted;
 
     // Get child comments (replies to this comment)
     const replies = allComments.filter((c) => c.parentId === comment.id);

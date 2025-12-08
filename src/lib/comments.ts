@@ -8,7 +8,7 @@ export interface Comment {
     userId: string;
     parentId: string | null;
     content: string;
-    isDeleted: number;
+    isDeleted: boolean;
     createdAt: Date;
     updatedAt: Date;
     user: {
@@ -127,7 +127,7 @@ export async function deleteComment(id: string): Promise<boolean> {
     const [deleted] = await db
         .update(comments)
         .set({
-            isDeleted: 1,
+            isDeleted: true,
             updatedAt: new Date(),
         })
         .where(eq(comments.id, id))
