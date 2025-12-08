@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getPostBySlug } from "@/lib/posts";
 import CommentSection from "@/components/comments/comment-section";
+import { auth } from "@/auth";
+import { AdminPostActions } from "@/components/posts/admin-post-actions";
 
 type ParamsPromise = Promise<{ slug: string }>;
 
@@ -90,6 +92,8 @@ export async function generateMetadata({
 export default async function PostPage({ params }: { params: ParamsPromise }) {
     const { slug } = await params;
     const post = await getPostBySlug(slug);
+    const session = await auth();
+    const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL;
 
     if (!post) {
         notFound();
@@ -112,6 +116,7 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
                 <h1 className="text-4xl font-black tracking-tighter md:text-5xl uppercase">
                     {post.title}
                 </h1>
+                {isAdmin && <AdminPostActions slug={post.slug} />}
             </header>
 
             <div className="mt-10 border-t-2 border-border pt-10 leading-relaxed">
