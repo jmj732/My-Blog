@@ -16,6 +16,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
     const { data: session, status } = useSession();
     const [comments, setComments] = useState<Comment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL;
 
     const fetchComments = async () => {
         try {
@@ -82,6 +83,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                             comment={comment}
                             allComments={comments}
                             currentUserId={session?.user?.id}
+                            isAdmin={isAdmin}
                             onCommentChange={handleCommentChange}
                         />
                     ))}
