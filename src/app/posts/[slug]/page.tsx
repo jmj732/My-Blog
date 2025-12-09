@@ -123,7 +123,7 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
                 {renderNovelContent(post.content)}
             </div>
 
-            <CommentSection postId={post.id} />
+            <CommentSection postId={post.id} isAdmin={isAdmin} />
         </article>
     );
 }

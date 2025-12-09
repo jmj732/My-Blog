@@ -10,13 +10,13 @@ import Link from "next/link";
 
 interface CommentSectionProps {
     postId: string;
+    isAdmin?: boolean;
 }
 
-export default function CommentSection({ postId }: CommentSectionProps) {
+export default function CommentSection({ postId, isAdmin = false }: CommentSectionProps) {
     const { data: session, status } = useSession();
     const [comments, setComments] = useState<Comment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL;
 
     const fetchComments = async () => {
         try {
