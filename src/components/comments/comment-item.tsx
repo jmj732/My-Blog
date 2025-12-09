@@ -10,6 +10,7 @@ interface CommentItemProps {
     comment: Comment;
     allComments: Comment[];
     currentUserId?: string;
+    isAdmin?: boolean;
     onCommentChange: () => void;
     depth?: number;
 }
@@ -18,6 +19,7 @@ export default function CommentItem({
     comment,
     allComments,
     currentUserId,
+    isAdmin = false,
     onCommentChange,
     depth = 0,
 }: CommentItemProps) {
@@ -26,6 +28,7 @@ export default function CommentItem({
 
     const isOwner = currentUserId === comment.userId;
     const isDeleted = !!comment.isDeleted;
+    const canEdit = isOwner || isAdmin;
 
     // Get child comments (replies to this comment)
     const replies = allComments.filter((c) => c.parentId === comment.id);
@@ -100,7 +103,7 @@ export default function CommentItem({
                     </div>
 
                     {/* Action Buttons */}
-                    {isOwner && !isDeleted && (
+                    {canEdit && !isDeleted && (
                         <div className="flex gap-2">
                             <Button
                                 variant="ghost"
@@ -181,6 +184,7 @@ export default function CommentItem({
                             comment={reply}
                             allComments={allComments}
                             currentUserId={currentUserId}
+                            isAdmin={isAdmin}
                             onCommentChange={onCommentChange}
                             depth={depth + 1}
                         />
