@@ -28,7 +28,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
             return new NextResponse("Content cannot be empty", { status: 400 });
         }
 
-        // Check if user owns this comment
+        // Check if user owns this comment or is admin
         const [existingComment] = await db
             .select()
             .from(comments)
@@ -39,7 +39,10 @@ export async function PATCH(req: Request, { params }: RouteParams) {
             return new NextResponse("Comment not found", { status: 404 });
         }
 
-        if (existingComment.userId !== session.user.id) {
+        const isOwner = existingComment.userId === session.user.id;
+        const isAdmin = session.user.email === process.env.ADMIN_EMAIL;
+
+        if (!isOwner && !isAdmin) {
             return new NextResponse("Forbidden", { status: 403 });
         }
 
@@ -69,7 +72,7 @@ export async function DELETE(req: Request, { params }: RouteParams) {
 
         const { commentId } = await params;
 
-        // Check if user owns this comment
+        // Check if user owns this comment or is admin
         const [existingComment] = await db
             .select()
             .from(comments)
@@ -80,7 +83,10 @@ export async function DELETE(req: Request, { params }: RouteParams) {
             return new NextResponse("Comment not found", { status: 404 });
         }
 
-        if (existingComment.userId !== session.user.id) {
+        const isOwner = existingComment.userId === session.user.id;
+        const isAdmin = session.user.email === process.env.ADMIN_EMAIL;
+
+        if (!isOwner && !isAdmin) {
             return new NextResponse("Forbidden", { status: 403 });
         }
 
