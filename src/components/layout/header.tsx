@@ -56,6 +56,9 @@ export async function Header() {
                     <Link href="/posts" className="hover:text-primary transition-colors">
                         포스트
                     </Link>
+                    <Link href="/community" className="hover:text-primary transition-colors">
+                        커뮤니티
+                    </Link>
                     {user?.email === process.env.ADMIN_EMAIL && (
                         <Link href="/write" className="hover:text-primary transition-colors">
                             글쓰기
