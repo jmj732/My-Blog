@@ -56,9 +56,15 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
                             <span className="border border-border bg-muted px-3 py-1 font-mono text-xs" suppressHydrationWarning>
                                 {post.createdAt ? dateFormatter.format(new Date(post.createdAt)) : "날짜 없음"}
                             </span>
-                            <span className="font-mono uppercase tracking-wide text-xs text-primary font-bold">
-                                DB
-                            </span>
+                            {post.author?.role === "admin" ? (
+                                <span className="font-mono uppercase tracking-wide text-xs text-primary font-bold">
+                                    ADMIN
+                                </span>
+                            ) : (
+                                <span className="font-mono uppercase tracking-wide text-xs text-muted-foreground font-bold">
+                                    {post.author?.name || "사용자"}
+                                </span>
+                            )}
                         </div>
                         <h2 className="mt-4 text-2xl font-bold tracking-tight group-hover:text-primary transition-colors">
                             {post.title}

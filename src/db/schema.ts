@@ -19,10 +19,12 @@ export const posts = pgTable("post", {
     slug: text("slug").unique().notNull(),
     title: text("title").notNull(),
     content: text("content").notNull(),
+    authorId: text("author_id").references(() => users.id, { onDelete: "cascade" }),
     embedding: vector("embedding", { dimensions: 384 }),
     createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
     createdAtIdx: index("post_created_at_idx").on(table.createdAt),
+    authorIdIdx: index("post_author_id_idx").on(table.authorId),
 }));
 
 export const users = pgTable("user", {
@@ -33,6 +35,7 @@ export const users = pgTable("user", {
     email: text("email").notNull(),
     emailVerified: timestamp("emailVerified", { mode: "date" }),
     image: text("image"),
+    role: text("role").notNull().default("user"), // 'admin' or 'user'
 });
 
 export const accounts = pgTable(

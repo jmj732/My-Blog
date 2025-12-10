@@ -1,5 +1,6 @@
+import "server-only";
 import { db } from "@/lib/db";
-import { posts } from "@/db/schema";
+import { posts, users } from "@/db/schema";
 import { desc, sql, eq } from "drizzle-orm";
 
 export interface Post {
@@ -8,6 +9,11 @@ export interface Post {
     slug: string;
     content: string;
     createdAt: Date | null;
+    author?: {
+        name: string | null;
+        email: string;
+        role: string;
+    } | null;
 }
 
 export interface PaginatedPosts {
@@ -36,10 +42,17 @@ export async function getPosts(page: number = 1, pageSize: number = 20): Promise
             id: posts.id,
             title: posts.title,
             slug: posts.slug,
-            content: sql<string>`''`, // Empty string for list view
+            // Explicitly alias the placeholder content to satisfy column selection
+            content: sql<string>`''`.as("content"),
             createdAt: posts.createdAt,
+            author: {
+                name: users.name,
+                email: users.email,
+                role: users.role,
+            },
         })
         .from(posts)
+        .leftJoin(users, eq(posts.authorId, users.id))
         .orderBy(desc(posts.createdAt))
         .limit(pageSize)
         .offset(offset);
@@ -82,10 +95,16 @@ export async function getRecentPosts(limit: number = 5): Promise<Post[]> {
             id: posts.id,
             title: posts.title,
             slug: posts.slug,
-            content: sql<string>`''`, // Empty string for list view
+            content: sql<string>`''`.as("content"), // Explicitly alias placeholder content
             createdAt: posts.createdAt,
+            author: {
+                name: users.name,
+                email: users.email,
+                role: users.role,
+            },
         })
         .from(posts)
+        .leftJoin(users, eq(posts.authorId, users.id))
         .orderBy(desc(posts.createdAt))
         .limit(limit);
 }

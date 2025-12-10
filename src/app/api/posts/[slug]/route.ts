@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { generateEmbedding } from "@/lib/ai";
 
 type RouteContext = {
-    params: { slug: string };
+    params: Promise<{ slug: string }>;
 };
 
 export async function PATCH(req: Request, { params }: RouteContext) {
@@ -17,7 +17,7 @@ export async function PATCH(req: Request, { params }: RouteContext) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { slug } = params;
+        const { slug } = await params;
         const body = await req.json();
         const { title, content } = body ?? {};
 
@@ -55,7 +55,7 @@ export async function DELETE(_req: Request, { params }: RouteContext) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { slug } = params;
+        const { slug } = await params;
         if (!slug) {
             return NextResponse.json({ error: "Missing slug" }, { status: 400 });
         }

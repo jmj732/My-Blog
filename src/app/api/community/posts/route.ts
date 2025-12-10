@@ -1,14 +1,14 @@
-
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { posts } from "@/db/schema";
+import { posts, users } from "@/db/schema";
 import { NextResponse } from "next/server";
 import { generateEmbedding } from "@/lib/ai";
+import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
     try {
         const session = await auth();
-        if (!session?.user || session.user.email !== process.env.ADMIN_EMAIL) {
+        if (!session?.user?.email) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
@@ -19,34 +19,36 @@ export async function POST(req: Request) {
             return new NextResponse("Missing required fields", { status: 400 });
         }
 
+        // Get user ID from email
+        const user = await db.query.users.findFirst({
+            where: eq(users.email, session.user.email),
+        });
+
+        if (!user) {
+            return new NextResponse("User not found", { status: 404 });
+        }
+
         const slug = title
             .toLowerCase()
             .replace(/[^a-z0-9가-힣]+/g, "-")
             .replace(/(^-|-$)+/g, "");
 
-        // Ensure unique slug (simple version, might need improvement for high volume)
+        // Ensure unique slug
         const uniqueSlug = `${slug}-${Date.now()}`;
 
         const embedding = await generateEmbedding(`${title}\n\n${content}`);
-
-        // Get admin user ID
-        const { users } = await import("@/db/schema");
-        const { eq } = await import("drizzle-orm");
-        const adminUser = await db.query.users.findFirst({
-            where: eq(users.email, session.user.email!),
-        });
 
         await db.insert(posts).values({
             title,
             content,
             slug: uniqueSlug,
-            authorId: adminUser?.id,
+            authorId: user.id,
             embedding,
         });
 
         return NextResponse.json({ success: true, slug: uniqueSlug });
     } catch (error) {
-        console.error("[POSTS_POST]", error);
+        console.error("[COMMUNITY_POSTS_POST]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }

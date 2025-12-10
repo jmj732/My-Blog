@@ -1,4 +1,5 @@
-import { inArray } from "drizzle-orm";
+import "server-only";
+import { inArray, sql } from "drizzle-orm";
 import { posts } from "@/db/schema";
 import { db } from "@/lib/db";
 import { generateEmbedding } from "@/lib/ai";
@@ -10,6 +11,32 @@ type SyncSummary = {
     updated: number;
     deleted: number;
 };
+
+let ensuredAuthorColumn = false;
+
+async function ensureAuthorIdColumn() {
+    if (ensuredAuthorColumn) return;
+    try {
+        await db.execute(sql`ALTER TABLE "post" ADD COLUMN IF NOT EXISTS "author_id" text`);
+        await db.execute(sql`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_indexes
+                    WHERE schemaname = current_schema()
+                    AND indexname = 'post_author_id_idx'
+                ) THEN
+                    CREATE INDEX post_author_id_idx ON "post" ("author_id");
+                END IF;
+            END
+            $$;
+        `);
+    } catch (error) {
+        console.error("[post-sync] failed to ensure author_id column", error);
+    } finally {
+        ensuredAuthorColumn = true;
+    }
+}
 
 function parseDate(input: string) {
     const parsed = new Date(input);
@@ -24,6 +51,8 @@ export async function syncPostsToDatabase(): Promise<SyncSummary> {
     if (mdxPosts.length === 0) {
         return { inserted: 0, updated: 0, deleted: 0, total: 0 };
     }
+
+    await ensureAuthorIdColumn();
 
     const existing = await db.query.posts.findMany({
         columns: {
@@ -74,7 +103,12 @@ export async function syncPostsToDatabase(): Promise<SyncSummary> {
     const slugsToDelete = existing.filter((p) => !mdxSlugSet.has(p.slug)).map((p) => p.slug);
 
     if (slugsToDelete.length > 0) {
-        await db.delete(posts).where(inArray(posts.slug, slugsToDelete));
+        // PostgreSQL has a limit of 65535 parameters, so batch delete in chunks
+        const BATCH_SIZE = 1000;
+        for (let i = 0; i < slugsToDelete.length; i += BATCH_SIZE) {
+            const batch = slugsToDelete.slice(i, i + BATCH_SIZE);
+            await db.delete(posts).where(inArray(posts.slug, batch));
+        }
         deleted = slugsToDelete.length;
     }
 

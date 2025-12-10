@@ -1,3 +1,4 @@
+import "server-only";
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
@@ -15,6 +16,12 @@ export type Post = PostMeta & {
     content: string;
 };
 
+type NovelNode = {
+    type?: string;
+    text?: string;
+    content?: NovelNode[];
+};
+
 function normalizeSlug(slug: string) {
     return slug.replace(/\.mdx$/, "");
 }
@@ -26,8 +33,44 @@ function ensurePostsDirectory() {
     return true;
 }
 
-export function createExcerpt(markdown: string, maxLength = 160) {
-    const plainText = markdown
+function extractTextFromNovelJson(input: string): string | null {
+    try {
+        const parsed = JSON.parse(input) as unknown;
+        if (!parsed || typeof parsed !== "object") return null;
+
+        const parts: string[] = [];
+        const isBlock = (nodeType?: string) =>
+            nodeType === "paragraph" || nodeType === "heading" || nodeType === "blockquote";
+
+        const walk = (node?: NovelNode) => {
+            if (!node || typeof node !== "object") return;
+            if (node.text) parts.push(node.text);
+            if (Array.isArray(node.content)) {
+                node.content.forEach((child) => walk(child));
+                if (isBlock(node.type)) {
+                    parts.push("\n");
+                }
+            }
+        };
+
+        walk(parsed as NovelNode);
+        const joined = parts
+            .join(" ")
+            .replace(/\s*\n\s*/g, " \n ")
+            .replace(/\s{2,}/g, " ")
+            .trim();
+
+        return joined || null;
+    } catch {
+        return null;
+    }
+}
+
+export function createExcerpt(markdownOrNovel: string, maxLength = 160) {
+    const novelText = extractTextFromNovelJson(markdownOrNovel);
+    const source = novelText ?? markdownOrNovel;
+
+    const plainText = source
         .replace(/```[\s\S]*?```/g, "")
         .replace(/`([^`]+)`/g, "$1")
         .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
