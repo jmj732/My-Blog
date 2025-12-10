@@ -25,17 +25,18 @@ export interface PaginatedPosts {
 }
 
 /**
- * Get paginated Admin posts from the database (authorId is null)
+ * Get paginated Admin posts from the database (user role is 'admin')
  * Optimized: excludes large content field from list view
  */
 export async function getPosts(page: number = 1, pageSize: number = 20): Promise<PaginatedPosts> {
     const offset = (page - 1) * pageSize;
 
-    // Get total count of admin posts (authorId is null)
+    // Get total count of admin posts (user role is 'admin')
     const [{ count }] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(posts)
-        .where(sql`${posts.authorId} IS NULL`);
+        .leftJoin(users, eq(posts.authorId, users.id))
+        .where(eq(users.role, "admin"));
 
     // Get paginated admin posts (excludes content for performance)
     const postsList = await db
@@ -53,7 +54,7 @@ export async function getPosts(page: number = 1, pageSize: number = 20): Promise
         })
         .from(posts)
         .leftJoin(users, eq(posts.authorId, users.id))
-        .where(sql`${posts.authorId} IS NULL`)
+        .where(eq(users.role, "admin"))
         .orderBy(desc(posts.createdAt))
         .limit(pageSize)
         .offset(offset);
@@ -68,17 +69,18 @@ export async function getPosts(page: number = 1, pageSize: number = 20): Promise
 }
 
 /**
- * Get paginated Community posts from the database (authorId is not null)
+ * Get paginated Community posts from the database (user role is 'user')
  * Optimized: excludes large content field from list view
  */
 export async function getCommunityPosts(page: number = 1, pageSize: number = 20): Promise<PaginatedPosts> {
     const offset = (page - 1) * pageSize;
 
-    // Get total count of community posts (authorId is not null)
+    // Get total count of community posts (user role is 'user')
     const [{ count }] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(posts)
-        .where(sql`${posts.authorId} IS NOT NULL`);
+        .leftJoin(users, eq(posts.authorId, users.id))
+        .where(eq(users.role, "user"));
 
     // Get paginated community posts (excludes content for performance)
     const postsList = await db
@@ -96,7 +98,7 @@ export async function getCommunityPosts(page: number = 1, pageSize: number = 20)
         })
         .from(posts)
         .leftJoin(users, eq(posts.authorId, users.id))
-        .where(sql`${posts.authorId} IS NOT NULL`)
+        .where(eq(users.role, "user"))
         .orderBy(desc(posts.createdAt))
         .limit(pageSize)
         .offset(offset);
