@@ -70,6 +70,7 @@ interface WritePageClientProps {
         title: string;
         content: string;
     };
+    apiEndpoint?: string; // Custom API endpoint for creating posts
 }
 
 function parseInitialContent(raw?: string): JSONContent | undefined {
@@ -81,7 +82,7 @@ function parseInitialContent(raw?: string): JSONContent | undefined {
     }
 }
 
-export function WritePageClient({ user, initialPost }: WritePageClientProps) {
+export function WritePageClient({ user, initialPost, apiEndpoint = "/api/posts" }: WritePageClientProps) {
     const router = useRouter();
     const [title, setTitle] = useState(initialPost?.title ?? "");
     const [content, setContent] = useState<JSONContent | undefined>(
@@ -109,7 +110,7 @@ export function WritePageClient({ user, initialPost }: WritePageClientProps) {
         setIsSaving(true);
         try {
             const isEdit = Boolean(isEditing && initialPost?.slug);
-            const endpoint = isEdit ? `/api/posts/${initialPost?.slug}` : "/api/posts";
+            const endpoint = isEdit ? `/api/posts/${initialPost?.slug}` : apiEndpoint;
             const response = await fetch(endpoint, {
                 method: isEdit ? "PATCH" : "POST",
                 headers: {

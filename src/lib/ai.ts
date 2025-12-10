@@ -1,3 +1,4 @@
+import "server-only";
 import { pipeline } from "@xenova/transformers";
 
 type EmbeddingOptions = {

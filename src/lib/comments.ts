@@ -1,3 +1,4 @@
+import "server-only";
 import { db } from "@/lib/db";
 import { comments } from "@/db/schema";
 import { eq, and, isNull, desc } from "drizzle-orm";
