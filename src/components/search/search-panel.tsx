@@ -32,6 +32,7 @@ export function SearchPanel({ initialQuery = "", autoFocus, onNavigate }: Search
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [usedFallback, setUsedFallback] = useState(false);
+    const [hasSearched, setHasSearched] = useState(false);
     const abortRef = useRef<AbortController | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -58,6 +59,7 @@ export function SearchPanel({ initialQuery = "", autoFocus, onNavigate }: Search
             setError(null);
             setUsedFallback(false);
             setIsLoading(false);
+            setHasSearched(false);
             return;
         }
 
@@ -80,12 +82,14 @@ export function SearchPanel({ initialQuery = "", autoFocus, onNavigate }: Search
 
                 setResults(payload.results ?? []);
                 setUsedFallback(Boolean(payload.fallback));
+                setHasSearched(true);
+                setIsLoading(false);
             } catch (err) {
                 if ((err as Error).name === "AbortError") {
                     return;
                 }
                 setError("네트워크 오류가 발생했습니다.");
-            } finally {
+                setHasSearched(true);
                 setIsLoading(false);
             }
         }, 250);
@@ -122,9 +126,8 @@ export function SearchPanel({ initialQuery = "", autoFocus, onNavigate }: Search
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder="Search posts, topics, or keywords..."
-                    className={`h-14 rounded-2xl bg-white/5 pl-12 pr-4 text-lg transition-all ${
-                        isLoading ? "border-purple-500/30 ring-2 ring-purple-500/20" : ""
-                    }`}
+                    className={`h-14 rounded-2xl bg-white/5 pl-12 pr-4 text-lg transition-all ${isLoading ? "border-purple-500/30 ring-2 ring-purple-500/20" : ""
+                        }`}
                 />
             </div>
 
@@ -170,7 +173,7 @@ export function SearchPanel({ initialQuery = "", autoFocus, onNavigate }: Search
                     </div>
                 )}
 
-                {!isLoading && query && results.length === 0 && (
+                {!error && hasSearched && !isLoading && query && results.length === 0 && (
                     <p className="rounded-xl border border-dashed border-white/10 bg-white/5 px-4 py-8 text-center text-sm text-muted-foreground">
                         No matches yet. Try refining your keywords or syncing posts to the database.
                     </p>
@@ -181,8 +184,8 @@ export function SearchPanel({ initialQuery = "", autoFocus, onNavigate }: Search
                         const matchLabel =
                             typeof result.similarity === "number"
                                 ? `${Math.round(
-                                      Math.min(Math.max(result.similarity, 0), 1) * 100
-                                  )}% match`
+                                    Math.min(Math.max(result.similarity, 0), 1) * 100
+                                )}% match`
                                 : null;
 
                         return (
@@ -204,7 +207,7 @@ export function SearchPanel({ initialQuery = "", autoFocus, onNavigate }: Search
                                             </span>
                                         )}
                                     </div>
-                                    <h3 className="mt-2 text-lg font-semibold text-white">{result.title}</h3>
+                                    <h3 className="mt-2 text-lg font-semibold text-foreground">{result.title}</h3>
                                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                                         {result.description}
                                     </p>
