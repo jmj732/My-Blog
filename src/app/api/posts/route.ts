@@ -36,11 +36,19 @@ export async function POST(req: Request) {
             where: eq(users.email, session.user.email!),
         });
 
+        if (!adminUser) {
+            return new NextResponse("Admin user not found", { status: 404 });
+        }
+
+        if (adminUser.role !== "admin") {
+            return new NextResponse("User is not an admin", { status: 403 });
+        }
+
         await db.insert(posts).values({
             title,
             content,
             slug: uniqueSlug,
-            authorId: adminUser?.id,
+            authorId: adminUser.id,
             embedding,
         });
 
