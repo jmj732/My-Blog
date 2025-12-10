@@ -54,10 +54,12 @@ export async function syncPostsToDatabase(): Promise<SyncSummary> {
 
     await ensureAuthorIdColumn();
 
+    // Only get Admin posts (authorId is null) for sync comparison
     const existing = await db.query.posts.findMany({
         columns: {
             slug: true,
         },
+        where: sql`${posts.authorId} IS NULL`,
     });
     const existingSet = new Set(existing.map((p) => p.slug));
 
@@ -80,6 +82,7 @@ export async function syncPostsToDatabase(): Promise<SyncSummary> {
                 title: post.title,
                 content: post.content,
                 embedding,
+                authorId: null, // Explicitly set as Admin post
                 createdAt: parseDate(post.date),
             })
             .onConflictDoUpdate({
@@ -88,6 +91,7 @@ export async function syncPostsToDatabase(): Promise<SyncSummary> {
                     title: post.title,
                     content: post.content,
                     embedding,
+                    authorId: null, // Keep as Admin post on update
                     createdAt: parseDate(post.date),
                 },
             });
@@ -99,6 +103,8 @@ export async function syncPostsToDatabase(): Promise<SyncSummary> {
         }
     }
 
+    // Only delete Admin posts that are no longer in MDX files
+    // Community posts (authorId is not null) are preserved
     const mdxSlugSet = new Set(mdxPosts.map((p) => p.slug));
     const slugsToDelete = existing.filter((p) => !mdxSlugSet.has(p.slug)).map((p) => p.slug);
 
@@ -107,7 +113,12 @@ export async function syncPostsToDatabase(): Promise<SyncSummary> {
         const BATCH_SIZE = 1000;
         for (let i = 0; i < slugsToDelete.length; i += BATCH_SIZE) {
             const batch = slugsToDelete.slice(i, i + BATCH_SIZE);
-            await db.delete(posts).where(inArray(posts.slug, batch));
+            // Delete only Admin posts (authorId is null)
+            await db
+                .delete(posts)
+                .where(
+                    sql`${posts.slug} = ANY(${batch}) AND ${posts.authorId} IS NULL`
+                );
         }
         deleted = slugsToDelete.length;
     }
