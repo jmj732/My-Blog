@@ -54,18 +54,8 @@ export async function syncPostsToDatabase(): Promise<SyncSummary> {
 
     await ensureAuthorIdColumn();
 
-    // Only get Admin posts (authorId is null) for sync comparison
-    const existing = await db.query.posts.findMany({
-        columns: {
-            slug: true,
-        },
-        where: sql`${posts.authorId} IS NULL`,
-    });
-    const existingSet = new Set(existing.map((p) => p.slug));
-
     let inserted = 0;
     let updated = 0;
-    let deleted = 0;
 
     for (const post of mdxPosts) {
         let embedding: number[] | null = null;
@@ -74,6 +64,11 @@ export async function syncPostsToDatabase(): Promise<SyncSummary> {
         } catch (error) {
             console.error("[post-sync] embedding generation failed, storing null", error);
         }
+
+        // Check if post already exists
+        const existing = await db.query.posts.findFirst({
+            where: sql`${posts.slug} = ${post.slug}`,
+        });
 
         await db
             .insert(posts)
@@ -96,37 +91,17 @@ export async function syncPostsToDatabase(): Promise<SyncSummary> {
                 },
             });
 
-        if (existingSet.has(post.slug)) {
+        if (existing) {
             updated += 1;
         } else {
             inserted += 1;
         }
     }
 
-    // Only delete Admin posts that are no longer in MDX files
-    // Community posts (authorId is not null) are preserved
-    const mdxSlugSet = new Set(mdxPosts.map((p) => p.slug));
-    const slugsToDelete = existing.filter((p) => !mdxSlugSet.has(p.slug)).map((p) => p.slug);
-
-    if (slugsToDelete.length > 0) {
-        // PostgreSQL has a limit of 65535 parameters, so batch delete in chunks
-        const BATCH_SIZE = 1000;
-        for (let i = 0; i < slugsToDelete.length; i += BATCH_SIZE) {
-            const batch = slugsToDelete.slice(i, i + BATCH_SIZE);
-            // Delete only Admin posts (authorId is null)
-            await db
-                .delete(posts)
-                .where(
-                    sql`${posts.slug} = ANY(${batch}) AND ${posts.authorId} IS NULL`
-                );
-        }
-        deleted = slugsToDelete.length;
-    }
-
     return {
         total: mdxPosts.length,
         inserted,
         updated,
-        deleted,
+        deleted: 0, // No longer deleting posts
     };
 }
