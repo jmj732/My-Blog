@@ -89,6 +89,8 @@ export async function generateMetadata({
     };
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function PostPage({ params }: { params: ParamsPromise }) {
     const { slug } = await params;
     const post = await getPostBySlug(slug);
