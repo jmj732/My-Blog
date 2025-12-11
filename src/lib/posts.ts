@@ -114,6 +114,7 @@ export async function getCommunityPosts(page: number = 1, pageSize: number = 20)
 
 /**
  * Get a single post by slug
+ * Includes author information for consistency with other post queries
  */
 export async function getPostBySlug(slug: string): Promise<Post | null> {
     const [post] = await db
@@ -123,8 +124,14 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
             slug: posts.slug,
             content: posts.content,
             createdAt: posts.createdAt,
+            author: {
+                name: users.name,
+                email: users.email,
+                role: users.role,
+            },
         })
         .from(posts)
+        .leftJoin(users, eq(posts.authorId, users.id))
         .where(eq(posts.slug, slug))
         .limit(1);
 

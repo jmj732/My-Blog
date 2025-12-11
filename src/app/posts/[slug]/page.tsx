@@ -110,9 +110,19 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
             </Link>
 
             <header className="mt-6 space-y-4">
-                <p className="text-sm font-mono uppercase tracking-widest text-primary font-bold" suppressHydrationWarning>
-                    {post.createdAt ? dateFormatter.format(new Date(post.createdAt)) : "날짜 없음"}
-                </p>
+                <div className="flex flex-wrap items-center gap-3 text-sm">
+                    <span className="font-mono uppercase tracking-widest text-primary font-bold" suppressHydrationWarning>
+                        {post.createdAt ? dateFormatter.format(new Date(post.createdAt)) : "날짜 없음"}
+                    </span>
+                    {post.author?.name && (
+                        <>
+                            <span className="text-muted-foreground">•</span>
+                            <span className="font-mono uppercase tracking-wide text-foreground font-bold">
+                                {post.author.name}
+                            </span>
+                        </>
+                    )}
+                </div>
                 <h1 className="text-4xl font-black tracking-tighter md:text-5xl uppercase">
                     {post.title}
                 </h1>
