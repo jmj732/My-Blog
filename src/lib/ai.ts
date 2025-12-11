@@ -31,8 +31,14 @@ async function getEmbedder(): Promise<FeatureExtractionFn> {
     };
 }
 
-export async function generateEmbedding(text: string): Promise<number[]> {
-    const model = await getEmbedder();
-    const output = await model(text, { pooling: "mean", normalize: true });
-    return Array.from(output.data);
+export async function generateEmbedding(text: string): Promise<number[] | null> {
+    try {
+        const model = await getEmbedder();
+        const output = await model(text, { pooling: "mean", normalize: true });
+        return Array.from(output.data);
+    } catch (error) {
+        console.warn("[AI] Failed to generate embedding (likely Vercel serverless limitation):", error);
+        // Return null instead of throwing - embeddings are optional
+        return null;
+    }
 }
