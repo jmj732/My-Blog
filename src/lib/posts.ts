@@ -31,12 +31,12 @@ export interface PaginatedPosts {
 export async function getPosts(page: number = 1, pageSize: number = 20): Promise<PaginatedPosts> {
     const offset = (page - 1) * pageSize;
 
-    // Get total count of admin posts (user role is 'admin')
+    // Get total count of admin posts (authorId is null OR user role is 'admin')
     const [{ count }] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(posts)
         .leftJoin(users, eq(posts.authorId, users.id))
-        .where(eq(users.role, "admin"));
+        .where(sql`${posts.authorId} IS NULL OR ${users.role} = 'admin'`);
 
     // Get paginated admin posts (excludes content for performance)
     const postsList = await db
@@ -54,7 +54,7 @@ export async function getPosts(page: number = 1, pageSize: number = 20): Promise
         })
         .from(posts)
         .leftJoin(users, eq(posts.authorId, users.id))
-        .where(eq(users.role, "admin"))
+        .where(sql`${posts.authorId} IS NULL OR ${users.role} = 'admin'`)
         .orderBy(desc(posts.createdAt))
         .limit(pageSize)
         .offset(offset);
@@ -79,7 +79,7 @@ export async function getCommunityPosts(page: number = 1, pageSize: number = 20)
     const [{ count }] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(posts)
-        .leftJoin(users, eq(posts.authorId, users.id))
+        .innerJoin(users, eq(posts.authorId, users.id))
         .where(eq(users.role, "user"));
 
     // Get paginated community posts (excludes content for performance)
@@ -97,7 +97,7 @@ export async function getCommunityPosts(page: number = 1, pageSize: number = 20)
             },
         })
         .from(posts)
-        .leftJoin(users, eq(posts.authorId, users.id))
+        .innerJoin(users, eq(posts.authorId, users.id))
         .where(eq(users.role, "user"))
         .orderBy(desc(posts.createdAt))
         .limit(pageSize)
