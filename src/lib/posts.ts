@@ -117,6 +117,7 @@ export async function getCommunityPosts(page: number = 1, pageSize: number = 20)
  * Includes author information for consistency with other post queries
  */
 export async function getPostBySlug(slug: string): Promise<Post | null> {
+    // 1. Try exact match
     const [post] = await db
         .select({
             id: posts.id,
@@ -135,7 +136,33 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
         .where(eq(posts.slug, slug))
         .limit(1);
 
-    return post || null;
+    if (post) return post;
+
+    // 2. Try decoded slug (if different)
+    const decodedSlug = decodeURIComponent(slug);
+    if (decodedSlug !== slug) {
+        const [decodedPost] = await db
+            .select({
+                id: posts.id,
+                title: posts.title,
+                slug: posts.slug,
+                content: posts.content,
+                createdAt: posts.createdAt,
+                author: {
+                    name: users.name,
+                    email: users.email,
+                    role: users.role,
+                },
+            })
+            .from(posts)
+            .leftJoin(users, eq(posts.authorId, users.id))
+            .where(eq(posts.slug, decodedSlug))
+            .limit(1);
+
+        if (decodedPost) return decodedPost;
+    }
+
+    return null;
 }
 
 /**

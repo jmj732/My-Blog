@@ -18,10 +18,11 @@ export async function PATCH(req: Request, { params }: RouteContext) {
         }
 
         const { slug } = await params;
+        const decodedSlug = decodeURIComponent(slug);
         const body = await req.json();
         const { title, content } = body ?? {};
 
-        if (!slug || !title || !content) {
+        if (!decodedSlug || !title || !content) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
@@ -34,7 +35,7 @@ export async function PATCH(req: Request, { params }: RouteContext) {
                 content,
                 embedding: embedding || undefined,
             })
-            .where(eq(posts.slug, slug))
+            .where(eq(posts.slug, decodedSlug))
             .returning({ slug: posts.slug });
 
         if (!updated) {
@@ -56,13 +57,14 @@ export async function DELETE(_req: Request, { params }: RouteContext) {
         }
 
         const { slug } = await params;
-        if (!slug) {
+        const decodedSlug = decodeURIComponent(slug);
+        if (!decodedSlug) {
             return NextResponse.json({ error: "Missing slug" }, { status: 400 });
         }
 
         const [removed] = await db
             .delete(posts)
-            .where(eq(posts.slug, slug))
+            .where(eq(posts.slug, decodedSlug))
             .returning({ slug: posts.slug });
 
         if (!removed) {
