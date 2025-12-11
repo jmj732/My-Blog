@@ -30,6 +30,17 @@ export async function GET(request: Request) {
 
     try {
         const embedding = await generateEmbedding(query);
+
+        if (!embedding) {
+            // If embedding generation fails, skip to fallback search
+            const dbFallback = await dbLexicalSearch(query, limit);
+            if (dbFallback.length > 0) {
+                return NextResponse.json({ results: dbFallback, fallback: true, source: "db" });
+            }
+            const fileFallback = lexicalSearch(query, limit);
+            return NextResponse.json({ results: fileFallback, fallback: true, source: "files" });
+        }
+
         const vectorResults = await vectorSearch(embedding, limit);
 
         if (vectorResults.length > 0) {

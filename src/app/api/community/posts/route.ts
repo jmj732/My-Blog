@@ -43,7 +43,7 @@ export async function POST(req: Request) {
             content,
             slug: uniqueSlug,
             authorId: user.id,
-            embedding,
+            embedding: embedding || undefined,
         });
 
         return NextResponse.json({ success: true, slug: uniqueSlug });

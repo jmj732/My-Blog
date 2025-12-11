@@ -32,7 +32,7 @@ export async function PATCH(req: Request, { params }: RouteContext) {
             .set({
                 title,
                 content,
-                embedding,
+                embedding: embedding || undefined,
             })
             .where(eq(posts.slug, slug))
             .returning({ slug: posts.slug });
