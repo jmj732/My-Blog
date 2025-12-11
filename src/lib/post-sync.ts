@@ -60,7 +60,9 @@ export async function syncPostsToDatabase(): Promise<SyncSummary> {
     for (const post of mdxPosts) {
         let embedding: number[] | null = null;
         try {
-            embedding = await generateEmbedding(`${post.title}\n\n${post.content}`);
+            // Repeat title 3x to boost its weight in semantic search
+            const titleBoosted = `${post.title}\n${post.title}\n${post.title}`;
+            embedding = await generateEmbedding(`${titleBoosted}\n\n${post.content}`);
         } catch (error) {
             console.error("[post-sync] embedding generation failed, storing null", error);
         }
