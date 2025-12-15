@@ -6,7 +6,7 @@ const rawBase =
   "https://gc-board-latest-1.onrender.com";
 
 const base = rawBase.replace(/\/+$/, "");
-const intervalMs = Number(process.env.KEEP_ALIVE_INTERVAL_MS ?? 14 * 60 * 1000);
+const intervalMs = Number(process.env.KEEP_ALIVE_INTERVAL_MS ?? 5 * 60 * 1000);
 const timeoutMs = Number(process.env.KEEP_ALIVE_TIMEOUT_MS ?? 5000);
 const targetUrl = `${base}/`;
 
