@@ -8,6 +8,7 @@ import {
     useState,
     type ReactNode,
 } from "react";
+import { buildApiUrl } from "@/lib/api-client";
 
 type AuthUser = {
     id?: string;
@@ -33,9 +34,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [error, setError] = useState<string | null>(null);
 
     const fetchMe = useCallback(async () => {
+        const backendMeUrl = buildApiUrl("/api/v1/auth/me");
         setLoading(true);
         try {
-            const res = await fetch("/api/auth/me", { credentials: "include" });
+            const res = await fetch(backendMeUrl, {
+                credentials: "include",
+                cache: "no-store",
+            });
 
             if (res.status === 401) {
                 setUser(null);
