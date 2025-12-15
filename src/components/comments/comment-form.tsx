@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { apiRequest } from "@/lib/api-client";
 
 interface CommentFormProps {
     postId: string;
@@ -36,22 +37,16 @@ export default function CommentForm({
         try {
             if (isEditing && commentId) {
                 // Update existing comment
-                const res = await fetch(`/api/comments/${commentId}`, {
+                await apiRequest<void>(`/api/v1/comments/${commentId}`, {
                     method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ content }),
                 });
-
-                if (!res.ok) throw new Error("Failed to update comment");
             } else {
                 // Create new comment
-                const res = await fetch("/api/comments", {
+                await apiRequest<void>(`/api/v1/comments`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ postId, content, parentId }),
                 });
-
-                if (!res.ok) throw new Error("Failed to post comment");
             }
 
             setContent("");
