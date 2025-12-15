@@ -1,11 +1,52 @@
+"use client";
+
 import Link from "next/link";
-import { Moon } from "lucide-react";
+import { Moon, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SearchDialogButton } from "@/components/search/search-dialog-button";
+import { useAuth } from "@/components/auth/auth-provider";
+
 const BACKEND_LOGIN_URL = "https://gc-board-latest-1.onrender.com/oauth2/authorization/github";
 
-export async function Header() {
+export function Header() {
+    const { user, loading } = useAuth();
+
+    const authSection = (() => {
+        if (loading) {
+            return (
+                <div className="h-9 w-28 rounded-md bg-muted animate-pulse" aria-busy="true" />
+            );
+        }
+
+        if (user) {
+            const displayName = user.name || user.email || "로그인됨";
+            return (
+                <div className="flex items-center gap-2 rounded-md border border-border px-3 py-2 bg-card/60">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <UserRound className="h-4 w-4" aria-hidden />
+                    </div>
+                    <div className="leading-tight">
+                        <div className="text-sm font-semibold">{displayName}</div>
+                        {user.role && (
+                            <div className="text-[11px] uppercase text-muted-foreground">
+                                {user.role}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <Link href={BACKEND_LOGIN_URL}>
+                <Button className="bg-primary text-primary-foreground hover:opacity-90 rounded-none font-bold">
+                    로그인
+                </Button>
+            </Link>
+        );
+    })();
+
     return (
         <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container flex h-16 items-center gap-6">
@@ -51,11 +92,7 @@ export async function Header() {
                         <Moon className="h-5 w-5" />
                     </Button>
 
-                    <Link href={BACKEND_LOGIN_URL}>
-                        <Button className="bg-primary text-primary-foreground hover:opacity-90 rounded-none font-bold">
-                            로그인
-                        </Button>
-                    </Link>
+                    {authSection}
                 </div>
             </div>
         </header>
