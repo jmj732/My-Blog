@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Loader2, Search, Sparkles } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import { apiRequest } from "@/lib/api-client";
 
 type SearchResult = {
     slug: string;
@@ -71,17 +72,20 @@ export function SearchPanel({ initialQuery = "", autoFocus, onNavigate }: Search
             abortRef.current = controller;
 
             try {
-                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
+                const payload = await apiRequest<{
+                    results: SearchResult[];
+                    fallback?: boolean;
+                    error?: string;
+                }>(`/api/v1/search?q=${encodeURIComponent(query)}`, {
                     signal: controller.signal,
                 });
-                const payload = await response.json();
 
-                if (!response.ok) {
-                    setError(payload.error ?? "검색에 실패했습니다.");
+                if (payload && "error" in payload && payload.error) {
+                    setError(payload.error);
                 }
 
-                setResults(payload.results ?? []);
-                setUsedFallback(Boolean(payload.fallback));
+                setResults(payload?.results ?? []);
+                setUsedFallback(Boolean(payload?.fallback));
                 setHasSearched(true);
                 setIsLoading(false);
             } catch (err) {
