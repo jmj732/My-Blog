@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { buildApiUrl } from "@/lib/api-client";
+
 type AuthUser = {
     id?: string;
     name?: string | null;
@@ -9,92 +11,64 @@ type AuthUser = {
     avatarUrl?: string | null;
 };
 
-type JwtPayload = {
-    sub?: string;
-    userId?: string;
-    id?: string;
-    nickname?: string;
-    nickName?: string;
-    name?: string;
-    email?: string;
-    role?: string;
-    roles?: string[];
-    auth?: string;
-    avatar_url?: string;
-    avatarUrl?: string;
-    [key: string]: unknown;
+type BackendMeResponse = {
+    success?: boolean;
+    data?: {
+        id?: string | number;
+        email?: string | null;
+        name?: string | null;
+        role?: string | null;
+        image?: string | null;
+        avatarUrl?: string | null;
+        nickname?: string | null;
+    } | null;
+    error?: string | null;
 };
-
-const PREFERRED_COOKIE_NAMES = ["JWT_TOKEN", "accessToken", "access_token", "token", "jwt", "authorization"];
 
 export async function GET(request: NextRequest) {
     try {
-        const token = extractJwtFromCookies(request);
+        const backendUrl = buildApiUrl("/api/v1/auth/me");
 
-        if (!token) {
+        const backendRes = await fetch(backendUrl, {
+            method: "GET",
+            headers: {
+                cookie: request.headers.get("cookie") ?? "",
+                authorization: request.headers.get("authorization") ?? "",
+            },
+            cache: "no-store",
+        });
+
+        if ([401, 403, 404].includes(backendRes.status)) {
             return NextResponse.json({ user: null }, { status: 401, headers: noStoreHeaders() });
         }
 
-        const payload = decodeJwtPayload(token);
-        if (!payload) {
+        if (!backendRes.ok) {
+            const text = await backendRes.text().catch(() => "Unknown error");
+            console.error("Backend /auth/me error:", backendRes.status, text);
+            return NextResponse.json({ error: "Failed to fetch auth" }, { status: 500, headers: noStoreHeaders() });
+        }
+
+        const payload = (await backendRes.json()) as BackendMeResponse;
+        const data = payload?.data ?? null;
+
+        if (!data) {
             return NextResponse.json({ user: null }, { status: 401, headers: noStoreHeaders() });
         }
 
         const user: AuthUser = {
-            id: payload.sub ?? payload.userId ?? payload.id,
-            name: payload.nickname ?? payload.nickName ?? payload.name ?? payload.email ?? null,
-            nickname: payload.nickname ?? payload.nickName ?? null,
-            email: payload.email ?? null,
-            role: payload.role ?? payload.roles?.[0] ?? payload.auth ?? null,
-            avatarUrl: payload.avatar_url ?? payload.avatarUrl ?? null,
+            id: data.id ? String(data.id) : undefined,
+            name: data.name ?? data.email ?? null,
+            nickname: data.nickname ?? data.name ?? null,
+            email: data.email ?? null,
+            role: data.role ?? null,
+            avatarUrl: data.image ?? data.avatarUrl ?? null,
         };
 
         return NextResponse.json({ user }, { headers: noStoreHeaders() });
     } catch (error) {
-        console.error("Failed to read JWT cookie:", error);
+        console.error("Failed to fetch backend auth/me:", error);
         return NextResponse.json({ error: "Failed to read auth" }, { status: 500, headers: noStoreHeaders() });
     }
-}
-
-function extractJwtFromCookies(request: NextRequest): string | null {
-    for (const name of PREFERRED_COOKIE_NAMES) {
-        const value = request.cookies.get(name)?.value;
-        if (value && isLikelyJwt(value)) {
-            return value;
-        }
-    }
-
-    for (const { value } of request.cookies.getAll()) {
-        if (value && isLikelyJwt(value)) {
-            return value;
-        }
-    }
-
-    return null;
-}
-
-function isLikelyJwt(value: string) {
-    return /^[A-Za-z0-9-_]+?\.[A-Za-z0-9-_]+(?:\.[A-Za-z0-9-_]+)?$/.test(value);
-}
-
-function decodeJwtPayload(token: string): JwtPayload | null {
-    const parts = token.split(".");
-    if (parts.length < 2) return null;
-
-    try {
-        const payload = parts[1];
-        const decoded = decodeBase64Url(payload);
-        return JSON.parse(decoded) as JwtPayload;
-    } catch {
-        return null;
-    }
-}
-
-function decodeBase64Url(input: string): string {
-    const normalized = input.replace(/-/g, "+").replace(/_/g, "/");
-    const paddingNeeded = (4 - (normalized.length % 4)) % 4;
-    const padded = normalized + "=".repeat(paddingNeeded);
-    return Buffer.from(padded, "base64").toString("utf-8");
 }
 
 function noStoreHeaders() {

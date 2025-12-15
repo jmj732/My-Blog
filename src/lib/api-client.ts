@@ -1,10 +1,10 @@
 const DEFAULT_API_BASE = "https://gc-board-latest-1.onrender.com";
 
-function getApiBase() {
+export function getApiBase() {
     return (process.env.NEXT_PUBLIC_API_BASE_URL || DEFAULT_API_BASE).replace(/\/$/, "");
 }
 
-function buildApiUrl(path: string) {
+export function buildApiUrl(path: string) {
     const base = getApiBase();
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
     return `${base}${normalizedPath}`;
