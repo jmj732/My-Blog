@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { apiRequest } from "@/lib/api-client";
 
 type AdminPostActionsProps = {
     slug: string;
@@ -20,10 +21,7 @@ export function AdminPostActions({ slug }: AdminPostActionsProps) {
 
         setIsDeleting(true);
         try {
-            const res = await fetch(`/api/posts/${slug}`, { method: "DELETE" });
-            if (!res.ok) {
-                throw new Error("Delete failed");
-            }
+            await apiRequest<void>(`/api/v1/posts/${encodeURIComponent(slug)}`, { method: "DELETE" });
             alert("글이 삭제되었습니다.");
             router.push("/posts");
         } catch (error) {
