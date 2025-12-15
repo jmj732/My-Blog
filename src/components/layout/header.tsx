@@ -20,7 +20,7 @@ export function Header() {
         }
 
         if (user) {
-            const displayName = user.name || user.email || "로그인됨";
+            const displayName = user.nickname || user.name || user.email || "로그인됨";
             return (
                 <div className="flex items-center gap-2 rounded-md border border-border px-3 py-2 bg-card/60">
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
