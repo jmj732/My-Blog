@@ -1,6 +1,9 @@
 
 const BASE_URL = "http://localhost:3000/api/proxy/v1/posts";
 
+export { };
+
+
 async function checkProxy() {
     console.log(`Checking proxy endpoint: ${BASE_URL}`);
     try {

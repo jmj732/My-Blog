@@ -1,6 +1,9 @@
 
 const BASE_URL = "https://gc-board-latest-1.onrender.com";
 
+export { };
+
+
 async function checkCookies() {
     console.log(`Checking headers from ${BASE_URL}/api/v1/posts...`);
     try {
