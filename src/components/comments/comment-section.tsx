@@ -1,12 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useState, useEffect, useCallback } from "react";
 import CommentForm from "./comment-form";
 import CommentItem from "./comment-item";
-import type { Comment } from "@/lib/comments";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import type { Comment } from "@/types/comment";
+import { apiRequest } from "@/lib/api-client";
 
 interface CommentSectionProps {
     postId: string;
@@ -14,27 +12,55 @@ interface CommentSectionProps {
 }
 
 export default function CommentSection({ postId, isAdmin = false }: CommentSectionProps) {
-    const { data: session, status } = useSession();
     const [comments, setComments] = useState<Comment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    const fetchComments = async () => {
+    type BackendComment = {
+        id: string | number;
+        postId: string | number;
+        userId: string | number;
+        userName: string | null;
+        deleted: boolean;
+        content: string;
+        createdAt: string;
+        updatedAt?: string;
+        parentId?: string | number | null;
+    };
+
+    const fetchComments = useCallback(async () => {
         try {
-            const res = await fetch(`/api/comments?postId=${postId}`);
-            if (res.ok) {
-                const data = await res.json();
-                setComments(data);
-            }
+            const data = await apiRequest<BackendComment[]>(
+                `/api/v1/comments?postId=${encodeURIComponent(postId)}`
+            );
+
+            const mapped: Comment[] = (data ?? []).map((c) => ({
+                id: String(c.id),
+                postId: String(c.postId),
+                userId: String(c.userId),
+                parentId: c.parentId ? String(c.parentId) : null,
+                content: c.content,
+                isDeleted: !!c.deleted,
+                createdAt: c.createdAt,
+                updatedAt: c.updatedAt ?? null,
+                user: {
+                    id: String(c.userId),
+                    name: c.userName,
+                    email: null,
+                    image: null,
+                },
+            }));
+
+            setComments(mapped);
         } catch (error) {
             console.error("Error fetching comments:", error);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [postId]);
 
     useEffect(() => {
         fetchComments();
-    }, [postId]);
+    }, [fetchComments]);
 
     const handleCommentChange = () => {
         fetchComments();
@@ -50,23 +76,9 @@ export default function CommentSection({ postId, isAdmin = false }: CommentSecti
             </h2>
 
             {/* Comment Form for Authenticated Users */}
-            {status === "loading" ? (
-                <div className="text-muted-foreground">로딩 중...</div>
-            ) : status === "authenticated" ? (
-                <div className="mb-8">
-                    <CommentForm postId={postId} onSuccess={handleCommentChange} />
-                </div>
-            ) : (
-                <div className="mb-8 p-6 border-2 border-border bg-muted/30 rounded-lg">
-                    <p className="text-muted-foreground text-center">
-                        댓글을 작성하려면{" "}
-                        <Link href="/api/auth/signin" className="text-primary font-bold hover:underline">
-                            로그인
-                        </Link>
-                        이 필요합니다.
-                    </p>
-                </div>
-            )}
+            <div className="mb-8">
+                <CommentForm postId={postId} onSuccess={handleCommentChange} />
+            </div>
 
             {/* Comments List */}
             {isLoading ? (
@@ -82,7 +94,7 @@ export default function CommentSection({ postId, isAdmin = false }: CommentSecti
                             key={comment.id}
                             comment={comment}
                             allComments={comments}
-                            currentUserId={session?.user?.id}
+                            currentUserId={undefined}
                             isAdmin={isAdmin}
                             onCommentChange={handleCommentChange}
                         />
