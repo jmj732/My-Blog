@@ -10,7 +10,8 @@ import { EditorRoot, EditorContent, type JSONContent } from "novel";
 import { StarterKit } from "novel";
 import { Placeholder } from "novel";
 import { cx } from "class-variance-authority";
-import { SlashCommand, slashCommand, suggestionItems } from "./slash-command";
+import { SlashCommand, slashCommand } from "./slash-command";
+import { apiRequest } from "@/lib/api-client";
 
 // Note: Drag & drop is built into Novel's StarterKit via TipTap extensions
 const extensions = [
@@ -82,7 +83,7 @@ function parseInitialContent(raw?: string): JSONContent | undefined {
     }
 }
 
-export function WritePageClient({ user, initialPost, apiEndpoint = "/api/posts" }: WritePageClientProps) {
+export function WritePageClient({ user, initialPost, apiEndpoint = "/api/v1/posts" }: WritePageClientProps) {
     const router = useRouter();
     const [title, setTitle] = useState(initialPost?.title ?? "");
     const [content, setContent] = useState<JSONContent | undefined>(
@@ -110,26 +111,16 @@ export function WritePageClient({ user, initialPost, apiEndpoint = "/api/posts" 
         setIsSaving(true);
         try {
             const isEdit = Boolean(isEditing && initialPost?.slug);
-            const endpoint = isEdit ? `/api/posts/${initialPost?.slug}` : apiEndpoint;
-            const response = await fetch(endpoint, {
+            const endpoint = isEdit ? `/api/v1/posts/${initialPost?.slug}` : apiEndpoint;
+            const data = await apiRequest<{ slug?: string }>(endpoint, {
                 method: isEdit ? "PATCH" : "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
                 body: JSON.stringify({
                     title,
                     content: JSON.stringify(content), // Serialize JSONContent
-                    tags,
                 }),
             });
-
-            if (!response.ok) {
-                throw new Error("Failed to save post");
-            }
-
-            const data = await response.json();
             alert(isEdit ? "글이 수정되었습니다!" : "글이 성공적으로 저장되었습니다!");
-            router.push(`/posts/${data.slug ?? initialPost?.slug}`);
+            router.push(`/posts/${data?.slug ?? initialPost?.slug}`);
         } catch (error) {
             console.error("Save failed:", error);
             alert("저장에 실패했습니다. 다시 시도해주세요.");
@@ -144,13 +135,9 @@ export function WritePageClient({ user, initialPost, apiEndpoint = "/api/posts" 
 
         setIsDeleting(true);
         try {
-            const response = await fetch(`/api/posts/${initialPost.slug}`, {
+            await apiRequest<void>(`/api/v1/posts/${initialPost.slug}`, {
                 method: "DELETE",
             });
-
-            if (!response.ok) {
-                throw new Error("Failed to delete post");
-            }
 
             alert("글이 삭제되었습니다.");
             router.push("/posts");
