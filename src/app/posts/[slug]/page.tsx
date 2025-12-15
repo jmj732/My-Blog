@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getPostBySlug } from "@/lib/posts";
 import CommentSection from "@/components/comments/comment-section";
-import { auth } from "@/auth";
 import { AdminPostActions } from "@/components/posts/admin-post-actions";
 
 type ParamsPromise = Promise<{ slug: string }>;
@@ -15,16 +14,36 @@ const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
     day: "numeric",
 });
 
-// Helper to render Novel JSON content  
+type NovelNode = {
+    type?: string;
+    attrs?: { level?: number };
+    text?: string;
+    content?: NovelNode[];
+};
+
+type NovelDocument = {
+    content?: NovelNode[];
+};
+
+function extractText(node?: NovelNode): string {
+    if (!node) return "";
+    if (typeof node.text === "string") return node.text;
+    if (Array.isArray(node.content)) {
+        return node.content.map(extractText).join("");
+    }
+    return "";
+}
+
+// Helper to render Novel JSON content
 function renderNovelContent(jsonString: string) {
     try {
-        const content = JSON.parse(jsonString);
-        if (!content.content) return null;
+        const parsed = JSON.parse(jsonString) as NovelDocument;
+        const nodes = Array.isArray(parsed.content) ? parsed.content : [];
 
-        return content.content.map((node: any, idx: number) => {
+        return nodes.map((node, idx) => {
             if (node.type === "heading") {
-                const text = node.content?.[0]?.text || "";
-                const level = node.attrs.level;
+                const text = extractText(node);
+                const level = node.attrs?.level ?? 1;
                 const sizeClasses: Record<number, string> = {
                     1: "text-4xl font-black uppercase tracking-tighter mt-8",
                     2: "text-3xl font-bold uppercase tracking-tight mt-10",
@@ -37,12 +56,12 @@ function renderNovelContent(jsonString: string) {
             }
 
             if (node.type === "paragraph") {
-                const text = node.content?.[0]?.text || "";
+                const text = extractText(node);
                 return <p key={idx} className="mt-6 leading-relaxed text-muted-foreground">{text}</p>;
             }
 
             if (node.type === "codeBlock") {
-                const code = node.content?.[0]?.text || "";
+                const code = extractText(node);
                 return (
                     <pre key={idx} className="mt-6 overflow-x-auto border-2 border-border bg-muted p-4 text-sm font-mono">
                         <code>{code}</code>
@@ -51,7 +70,7 @@ function renderNovelContent(jsonString: string) {
             }
 
             if (node.type === "blockquote") {
-                const text = node.content?.[0]?.content?.[0]?.text || "";
+                const text = extractText(node);
                 return (
                     <blockquote key={idx} className="mt-8 border-l-4 border-primary bg-muted px-6 py-4 text-lg italic">
                         {text}
@@ -94,8 +113,7 @@ export const dynamic = "force-dynamic";
 export default async function PostPage({ params }: { params: ParamsPromise }) {
     const { slug } = await params;
     const post = await getPostBySlug(slug);
-    const session = await auth();
-    const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL;
+    const isAdmin = false;
 
     if (!post) {
         notFound();
