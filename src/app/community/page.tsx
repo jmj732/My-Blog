@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { ArrowRight, Users, ChevronLeft, ChevronRight, PenLine } from "lucide-react";
 import { getCommunityPosts } from "@/lib/posts";
 import { Button } from "@/components/ui/button";
-import { auth } from "@/auth";
 
 const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
     year: "numeric",
@@ -24,7 +23,6 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
     const params = await searchParams;
     const currentPage = Number(params.page) || 1;
     const { posts, total, totalPages } = await getCommunityPosts(currentPage, 20);
-    const session = await auth();
 
     return (
         <section className="container py-16 md:py-24">
@@ -40,28 +38,23 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
                     총 <span className="font-bold text-primary">{total.toLocaleString()}</span>개의 커뮤니티 포스트
                 </p>
 
-                {/* 글쓰기 버튼 */}
-                {session?.user && (
-                    <Link href="/community/write" className="inline-block mt-6">
-                        <Button className="border-2 border-primary rounded-none uppercase font-bold">
-                            <PenLine className="w-4 h-4 mr-2" />
-                            글쓰기
-                        </Button>
-                    </Link>
-                )}
+                <Link href="/community/write" className="inline-block mt-6">
+                    <Button className="border-2 border-primary rounded-none uppercase font-bold">
+                        <PenLine className="w-4 h-4 mr-2" />
+                        글쓰기
+                    </Button>
+                </Link>
             </div>
 
             <div className="mt-12 grid gap-6 max-w-4xl mx-auto">
                 {posts.length === 0 && (
                     <div className="border border-border bg-muted p-10 text-center">
                         <p className="text-muted-foreground mb-4">아직 커뮤니티 포스트가 없습니다.</p>
-                        {session?.user && (
-                            <Link href="/community/write">
-                                <Button className="border-2 border-primary rounded-none uppercase font-bold">
-                                    첫 포스트 작성하기
-                                </Button>
-                            </Link>
-                        )}
+                        <Link href="/community/write">
+                            <Button className="border-2 border-primary rounded-none uppercase font-bold">
+                                첫 포스트 작성하기
+                            </Button>
+                        </Link>
                     </div>
                 )}
 
