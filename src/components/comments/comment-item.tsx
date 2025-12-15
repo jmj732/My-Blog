@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Edit2, Trash2 } from "lucide-react";
 import CommentForm from "./comment-form";
-import type { Comment } from "@/lib/comments";
+import type { Comment } from "@/types/comment";
+import { apiRequest } from "@/lib/api-client";
 
 interface CommentItemProps {
     comment: Comment;
@@ -37,12 +39,9 @@ export default function CommentItem({
         if (!confirm("정말 삭제하시겠습니까?")) return;
 
         try {
-            const res = await fetch(`/api/comments/${comment.id}`, {
+            await apiRequest<void>(`/api/v1/comments/${comment.id}`, {
                 method: "DELETE",
             });
-
-            if (!res.ok) throw new Error("Failed to delete comment");
-
             onCommentChange();
         } catch (error) {
             console.error("Error deleting comment:", error);
@@ -85,9 +84,12 @@ export default function CommentItem({
                 <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
                         {comment.user?.image && (
-                            <img
+                            <Image
                                 src={comment.user.image}
                                 alt={comment.user.name || "User"}
+                                width={32}
+                                height={32}
+                                unoptimized
                                 className="w-8 h-8 rounded-full border-2 border-border"
                             />
                         )}
