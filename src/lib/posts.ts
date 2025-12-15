@@ -1,7 +1,5 @@
 import "server-only";
-import { db } from "@/lib/db";
-import { posts, users } from "@/db/schema";
-import { desc, sql, eq } from "drizzle-orm";
+import { apiRequest } from "@/lib/api-client";
 
 export interface Post {
     id: string;
@@ -25,166 +23,169 @@ export interface PaginatedPosts {
 }
 
 /**
- * Get paginated Admin posts from the database (user role is 'admin')
- * Optimized: excludes large content field from list view
+ * Get paginated posts from backend API
  */
 export async function getPosts(page: number = 1, pageSize: number = 20): Promise<PaginatedPosts> {
-    const offset = (page - 1) * pageSize;
+    const params = new URLSearchParams({
+        page: String(Math.max(page - 1, 0)),
+        pageSize: String(pageSize),
+    });
 
-    // Get total count of admin posts (authorId is null OR user role is 'admin')
-    const [{ count }] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(posts)
-        .leftJoin(users, eq(posts.authorId, users.id))
-        .where(sql`${posts.authorId} IS NULL OR ${users.role} = 'admin'`);
+    const data = await apiRequest<{
+        content: {
+            id: number | string;
+            slug: string;
+            title: string;
+            content: string;
+            authorName?: string;
+            authorRole?: string;
+            createdAt?: string;
+        }[];
+        totalElements: number;
+        totalPages: number;
+        number: number;
+        size: number;
+    }>(`/api/v1/posts?${params.toString()}`);
 
-    // Get paginated admin posts (excludes content for performance)
-    const postsList = await db
-        .select({
-            id: posts.id,
-            title: posts.title,
-            slug: posts.slug,
-            content: sql<string>`''`.as("content"),
-            createdAt: posts.createdAt,
-            author: {
-                name: users.name,
-                email: users.email,
-                role: users.role,
-            },
-        })
-        .from(posts)
-        .leftJoin(users, eq(posts.authorId, users.id))
-        .where(sql`${posts.authorId} IS NULL OR ${users.role} = 'admin'`)
-        .orderBy(desc(posts.createdAt))
-        .limit(pageSize)
-        .offset(offset);
+    const mappedPosts: Post[] = (data?.content ?? []).map((p) => ({
+        id: String(p.id),
+        title: p.title,
+        slug: p.slug,
+        content: p.content,
+        createdAt: p.createdAt ? new Date(p.createdAt) : null,
+        author: p.authorName
+            ? {
+                  name: p.authorName,
+                  email: "",
+                  role: p.authorRole ?? "user",
+              }
+            : null,
+    }));
 
     return {
-        posts: postsList,
-        total: count,
+        posts: mappedPosts,
+        total: data?.totalElements ?? mappedPosts.length,
         page,
         pageSize,
-        totalPages: Math.ceil(count / pageSize),
+        totalPages: data?.totalPages ?? 1,
     };
 }
 
 /**
- * Get paginated Community posts from the database (user role is 'user')
- * Optimized: excludes large content field from list view
+ * Get paginated Community posts from backend API
  */
 export async function getCommunityPosts(page: number = 1, pageSize: number = 20): Promise<PaginatedPosts> {
-    const offset = (page - 1) * pageSize;
+    const params = new URLSearchParams({
+        page: String(Math.max(page - 1, 0)),
+        pageSize: String(pageSize),
+        type: "community",
+    });
 
-    // Get total count of community posts (user role is 'user')
-    const [{ count }] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(posts)
-        .innerJoin(users, eq(posts.authorId, users.id))
-        .where(eq(users.role, "user"));
+    const data = await apiRequest<{
+        content: {
+            id: number | string;
+            slug: string;
+            title: string;
+            content: string;
+            authorName?: string;
+            authorRole?: string;
+            createdAt?: string;
+        }[];
+        totalElements: number;
+        totalPages: number;
+        number: number;
+        size: number;
+    }>(`/api/v1/posts?${params.toString()}`);
 
-    // Get paginated community posts (excludes content for performance)
-    const postsList = await db
-        .select({
-            id: posts.id,
-            title: posts.title,
-            slug: posts.slug,
-            content: sql<string>`''`.as("content"),
-            createdAt: posts.createdAt,
-            author: {
-                name: users.name,
-                email: users.email,
-                role: users.role,
-            },
-        })
-        .from(posts)
-        .innerJoin(users, eq(posts.authorId, users.id))
-        .where(eq(users.role, "user"))
-        .orderBy(desc(posts.createdAt))
-        .limit(pageSize)
-        .offset(offset);
+    const mappedPosts: Post[] = (data?.content ?? []).map((p) => ({
+        id: String(p.id),
+        title: p.title,
+        slug: p.slug,
+        content: p.content,
+        createdAt: p.createdAt ? new Date(p.createdAt) : null,
+        author: p.authorName
+            ? {
+                  name: p.authorName,
+                  email: "",
+                  role: p.authorRole ?? "user",
+              }
+            : null,
+    }));
 
     return {
-        posts: postsList,
-        total: count,
+        posts: mappedPosts,
+        total: data?.totalElements ?? mappedPosts.length,
         page,
         pageSize,
-        totalPages: Math.ceil(count / pageSize),
+        totalPages: data?.totalPages ?? 1,
     };
 }
 
 /**
- * Get a single post by slug
- * Includes author information for consistency with other post queries
+ * Get a single post by slug from backend API
  */
 export async function getPostBySlug(slug: string): Promise<Post | null> {
-    // 1. Try exact match
-    const [post] = await db
-        .select({
-            id: posts.id,
-            title: posts.title,
-            slug: posts.slug,
-            content: posts.content,
-            createdAt: posts.createdAt,
-            author: {
-                name: users.name,
-                email: users.email,
-                role: users.role,
-            },
-        })
-        .from(posts)
-        .leftJoin(users, eq(posts.authorId, users.id))
-        .where(eq(posts.slug, slug))
-        .limit(1);
+    const data = await apiRequest<{
+        id: number | string;
+        slug: string;
+        title: string;
+        content: string;
+        createdAt?: string;
+        authorName?: string;
+        authorRole?: string;
+    } | null>(`/api/v1/posts/${encodeURIComponent(slug)}`);
 
-    if (post) return post;
+    if (!data) return null;
 
-    // 2. Try decoded slug (if different)
-    const decodedSlug = decodeURIComponent(slug);
-    if (decodedSlug !== slug) {
-        const [decodedPost] = await db
-            .select({
-                id: posts.id,
-                title: posts.title,
-                slug: posts.slug,
-                content: posts.content,
-                createdAt: posts.createdAt,
-                author: {
-                    name: users.name,
-                    email: users.email,
-                    role: users.role,
-                },
-            })
-            .from(posts)
-            .leftJoin(users, eq(posts.authorId, users.id))
-            .where(eq(posts.slug, decodedSlug))
-            .limit(1);
-
-        if (decodedPost) return decodedPost;
-    }
-
-    return null;
+    return {
+        id: String(data.id),
+        title: data.title,
+        slug: data.slug,
+        content: data.content,
+        createdAt: data.createdAt ? new Date(data.createdAt) : null,
+        author: data.authorName
+            ? {
+                  name: data.authorName,
+                  email: "",
+                  role: data.authorRole ?? "user",
+              }
+            : null,
+    };
 }
 
 /**
- * Get recent posts (for sidebar, homepage, etc.)
- * Optimized: excludes content field
+ * Get recent posts (for sidebar, homepage, etc.) from backend API
  */
 export async function getRecentPosts(limit: number = 5): Promise<Post[]> {
-    return db
-        .select({
-            id: posts.id,
-            title: posts.title,
-            slug: posts.slug,
-            content: sql<string>`''`.as("content"), // Explicitly alias placeholder content
-            createdAt: posts.createdAt,
-            author: {
-                name: users.name,
-                email: users.email,
-                role: users.role,
-            },
-        })
-        .from(posts)
-        .leftJoin(users, eq(posts.authorId, users.id))
-        .orderBy(desc(posts.createdAt))
-        .limit(limit);
+    const params = new URLSearchParams({
+        page: "0",
+        pageSize: String(limit),
+    });
+
+    const data = await apiRequest<{
+        content: {
+            id: number | string;
+            slug: string;
+            title: string;
+            content: string;
+            createdAt?: string;
+            authorName?: string;
+            authorRole?: string;
+        }[];
+    }>(`/api/v1/posts?${params.toString()}`);
+
+    return (data?.content ?? []).map((p) => ({
+        id: String(p.id),
+        title: p.title,
+        slug: p.slug,
+        content: p.content,
+        createdAt: p.createdAt ? new Date(p.createdAt) : null,
+        author: p.authorName
+            ? {
+                  name: p.authorName,
+                  email: "",
+                  role: p.authorRole ?? "user",
+              }
+            : null,
+    }));
 }
