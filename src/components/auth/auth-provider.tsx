@@ -53,8 +53,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 throw new Error(message);
             }
 
-            const body = (await res.json()) as { user: AuthUser | null };
-            setUser(body.user ?? null);
+            const payload = await res.json();
+            const data = payload?.data;
+
+            if (data) {
+                const mappedUser: AuthUser = {
+                    id: data.id ? String(data.id) : undefined,
+                    name: data.name ?? data.email ?? null,
+                    nickname: data.nickname ?? data.name ?? null,
+                    email: data.email ?? null,
+                    role: data.role ?? null,
+                    avatarUrl: data.image ?? data.avatarUrl ?? null,
+                };
+                setUser(mappedUser);
+            } else {
+                setUser(null);
+            }
             setError(null);
         } catch (err) {
             console.error("Failed to fetch auth state:", err);

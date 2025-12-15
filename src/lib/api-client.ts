@@ -1,9 +1,7 @@
-const DEFAULT_API_BASE = "/api/proxy";
+const DEFAULT_API_BASE = "https://gc-board-latest-1.onrender.com";
 
 export function getApiBase() {
-    // Force usage of proxy even if env var suggests otherwise, or recommend user to change it.
-    // For now, let's prioritize the proxy path unless env var explicitly overrides it to something else (unlikely in this context)
-    return "/api/proxy";
+    return (process.env.NEXT_PUBLIC_API_BASE_URL || DEFAULT_API_BASE).replace(/\/$/, "");
 }
 
 export function buildApiUrl(path: string) {
