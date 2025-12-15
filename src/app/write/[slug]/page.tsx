@@ -1,6 +1,5 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
-import { auth } from "@/auth";
 import { getPostBySlug } from "@/lib/posts";
 import { WritePageClient } from "../write-page-client";
 
@@ -9,20 +8,10 @@ interface EditPageProps {
 }
 
 export default async function EditPage({ params }: EditPageProps) {
-    const session = await auth();
-
-    if (!session?.user) {
-        redirect("/api/auth/signin");
-    }
-
-    if (session.user.email !== process.env.ADMIN_EMAIL) {
-        redirect("/");
-    }
-
     const post = await getPostBySlug(params.slug);
     if (!post) {
         notFound();
     }
 
-    return <WritePageClient user={session.user} initialPost={post} />;
+    return <WritePageClient user={{}} initialPost={post} />;
 }
