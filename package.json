@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "keep-alive": "tsx scripts/keep-alive.ts"
+    "keep-alive": "tsx scripts/keep-alive.ts",
+    "sync-posts": "tsx scripts/sync-posts.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
