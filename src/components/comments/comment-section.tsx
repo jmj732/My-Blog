@@ -9,9 +9,10 @@ import { apiRequest } from "@/lib/api-client";
 interface CommentSectionProps {
     postId: string;
     isAdmin?: boolean;
+    currentUserId?: string;
 }
 
-export default function CommentSection({ postId, isAdmin = false }: CommentSectionProps) {
+export default function CommentSection({ postId, isAdmin = false, currentUserId }: CommentSectionProps) {
     const [comments, setComments] = useState<Comment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -94,7 +95,7 @@ export default function CommentSection({ postId, isAdmin = false }: CommentSecti
                             key={comment.id}
                             comment={comment}
                             allComments={comments}
-                            currentUserId={undefined}
+                            currentUserId={currentUserId}
                             isAdmin={isAdmin}
                             onCommentChange={handleCommentChange}
                         />

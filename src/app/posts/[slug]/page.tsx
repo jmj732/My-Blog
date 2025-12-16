@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { cookies } from "next/headers";
 import { getPostBySlug } from "@/lib/posts";
+import { getApiBase } from "@/lib/api-client";
 import CommentSection from "@/components/comments/comment-section";
 import { AdminPostActions } from "@/components/posts/admin-post-actions";
 
@@ -13,6 +15,37 @@ const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
     month: "long",
     day: "numeric",
 });
+
+// Helper to get current user from backend
+async function getCurrentUser() {
+    try {
+        const cookieStore = await cookies();
+        const backendUrl = `${getApiBase()}/api/v1/auth/me`;
+
+        const cookieHeader = cookieStore
+            .getAll()
+            .map((c) => `${c.name}=${c.value}`)
+            .join("; ");
+
+        const res = await fetch(backendUrl, {
+            method: "GET",
+            headers: {
+                Cookie: cookieHeader,
+            },
+            cache: "no-store",
+        });
+
+        if (!res.ok || res.status === 401) {
+            return null;
+        }
+
+        const payload = await res.json();
+        return payload?.data ?? null;
+    } catch (err) {
+        console.error("[getCurrentUser] Failed:", err);
+        return null;
+    }
+}
 
 type NovelNode = {
     type?: string;
@@ -113,7 +146,11 @@ export const dynamic = "force-dynamic";
 export default async function PostPage({ params }: { params: ParamsPromise }) {
     const { slug } = await params;
     const post = await getPostBySlug(slug);
-    const isAdmin = false;
+
+    // Get current user and check admin role
+    const user = await getCurrentUser();
+    const isAdmin = user?.role === "ADMIN";
+    const currentUserId = user?.id ? String(user.id) : undefined;
 
     if (!post) {
         notFound();
@@ -153,7 +190,7 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
                 {renderNovelContent(post.content)}
             </div>
 
-            <CommentSection postId={post.id} isAdmin={isAdmin} />
+            <CommentSection postId={post.id} isAdmin={isAdmin} currentUserId={currentUserId} />
         </article>
     );
 }
