@@ -183,7 +183,7 @@ export function WritePageClient({ user: propUser, initialPost, apiEndpoint = "/a
                         {isEditing && (
                             <Button
                                 variant="destructive"
-                                className="rounded-none"
+                                className="rounded-none bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
                                 onClick={handleDelete}
                                 disabled={isDeleting || isSaving}
                             >
