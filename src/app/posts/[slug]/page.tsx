@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { getPostBySlug } from "@/lib/posts";
 import { getApiBase } from "@/lib/api-client";
 import CommentSection from "@/components/comments/comment-section";
-import { AdminPostActions } from "@/components/posts/admin-post-actions";
+import { PostActions } from "@/components/posts/post-actions";
 
 type ParamsPromise = Promise<{ slug: string }>;
 
@@ -147,14 +147,16 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
     const { slug } = await params;
     const post = await getPostBySlug(slug);
 
-    // Get current user and check admin role
-    const user = await getCurrentUser();
-    const isAdmin = user?.role === "ADMIN";
-    const currentUserId = user?.id ? String(user.id) : undefined;
-
     if (!post) {
         notFound();
     }
+
+    // Get current user and check permissions
+    const user = await getCurrentUser();
+    const isAdmin = user?.role === "ADMIN";
+    const isOwner = user?.id && post.author?.id && String(user.id) === post.author.id;
+    const canEdit = isAdmin || isOwner;
+    const currentUserId = user?.id ? String(user.id) : undefined;
 
     return (
         <article className="container max-w-3xl py-16">
@@ -183,7 +185,7 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
                 <h1 className="text-4xl font-black tracking-tighter md:text-5xl uppercase">
                     {post.title}
                 </h1>
-                {isAdmin && <AdminPostActions slug={post.slug} />}
+                {canEdit && <PostActions slug={post.slug} />}
             </header>
 
             <div className="mt-10 border-t-2 border-border pt-10 leading-relaxed">

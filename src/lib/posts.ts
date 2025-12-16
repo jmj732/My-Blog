@@ -8,6 +8,7 @@ export interface Post {
     content: string;
     createdAt: Date | null;
     author?: {
+        id: string;
         name: string | null;
         email: string;
         role: string;
@@ -38,6 +39,7 @@ export async function getPosts(page: number = 1, pageSize: number = 20): Promise
             slug: string;
             title: string;
             content: string;
+            authorId?: number | string;
             authorName?: string;
             authorRole?: string;
             createdAt?: string;
@@ -55,6 +57,7 @@ export async function getPosts(page: number = 1, pageSize: number = 20): Promise
         content: p.content,
         createdAt: p.createdAt ? new Date(p.createdAt) : null,
         author: {
+            id: p.authorId ? String(p.authorId) : "",
             name: p.authorName || "jmj732",
             email: "",
             role: p.authorRole ?? "user",
@@ -86,6 +89,7 @@ export async function getCommunityPosts(page: number = 1, pageSize: number = 20)
             slug: string;
             title: string;
             content: string;
+            authorId?: number | string;
             authorName?: string;
             authorRole?: string;
             createdAt?: string;
@@ -103,6 +107,7 @@ export async function getCommunityPosts(page: number = 1, pageSize: number = 20)
         content: p.content,
         createdAt: p.createdAt ? new Date(p.createdAt) : null,
         author: {
+            id: p.authorId ? String(p.authorId) : "",
             name: p.authorName || "jmj732",
             email: "",
             role: p.authorRole ?? "user",
@@ -128,6 +133,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
         title: string;
         content: string;
         createdAt?: string;
+        authorId?: number | string;
         authorName?: string;
         authorRole?: string;
     } | null>(`/api/v1/posts/${encodeURIComponent(slug)}`);
@@ -141,6 +147,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
         content: data.content,
         createdAt: data.createdAt ? new Date(data.createdAt) : null,
         author: {
+            id: data.authorId ? String(data.authorId) : "",
             name: data.authorName || "jmj732",
             email: "",
             role: data.authorRole ?? "user",
@@ -164,6 +171,7 @@ export async function getRecentPosts(limit: number = 5): Promise<Post[]> {
             title: string;
             content: string;
             createdAt?: string;
+            authorId?: number | string;
             authorName?: string;
             authorRole?: string;
         }[];
@@ -176,6 +184,7 @@ export async function getRecentPosts(limit: number = 5): Promise<Post[]> {
         content: p.content,
         createdAt: p.createdAt ? new Date(p.createdAt) : null,
         author: {
+            id: p.authorId ? String(p.authorId) : "",
             name: p.authorName || "jmj732",
             email: "",
             role: p.authorRole ?? "user",
