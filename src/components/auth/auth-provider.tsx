@@ -85,16 +85,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [fetchMe]);
 
     const logout = useCallback(async () => {
+        console.log("Logout initiated");
         try {
             const backendLogoutUrl = buildApiUrl("/api/v1/auth/logout"); // Standard Spring Security logout
-            await fetch(backendLogoutUrl, {
+            console.log("Sending logout request to:", backendLogoutUrl);
+
+            const res = await fetch(backendLogoutUrl, {
                 method: "POST",
                 credentials: "include",
             });
+            console.log("Logout response status:", res.status, res.statusText);
+
             // Even if the backend fails, we accept it as logged out on frontend
         } catch (err) {
-            console.error("Logout failed", err);
+            console.error("Logout failed with error:", err);
         } finally {
+            console.log("Clearing local user state");
             setUser(null);
             setError(null);
         }
