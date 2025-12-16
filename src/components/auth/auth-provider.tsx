@@ -24,6 +24,7 @@ type AuthContextValue = {
     loading: boolean;
     error: string | null;
     refresh: () => Promise<void>;
+    logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -83,6 +84,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fetchMe();
     }, [fetchMe]);
 
+    const logout = useCallback(async () => {
+        try {
+            const backendLogoutUrl = buildApiUrl("/logout"); // Standard Spring Security logout
+            await fetch(backendLogoutUrl, {
+                method: "POST",
+                credentials: "include",
+            });
+            // Even if the backend fails, we accept it as logged out on frontend
+        } catch (err) {
+            console.error("Logout failed", err);
+        } finally {
+            setUser(null);
+            setError(null);
+        }
+    }, []);
+
     return (
         <AuthContext.Provider
             value={{
@@ -90,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 loading,
                 error,
                 refresh: fetchMe,
+                logout,
             }}
         >
             {children}

@@ -10,7 +10,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 const BACKEND_LOGIN_URL = "https://gc-board-latest-1.onrender.com/oauth2/authorization/github";
 
 export function Header() {
-    const { user, loading } = useAuth();
+    const { user, loading, logout } = useAuth();
 
     const authSection = (() => {
         if (loading) {
@@ -22,18 +22,27 @@ export function Header() {
         if (user) {
             const displayName = user.nickname || user.name || user.email || "로그인됨";
             return (
-                <div className="flex items-center gap-2 rounded-md border border-border px-3 py-2 bg-card/60">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-                        <UserRound className="h-4 w-4" aria-hidden />
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 rounded-md border border-border px-3 py-2 bg-card/60">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                            <UserRound className="h-4 w-4" aria-hidden />
+                        </div>
+                        <div className="leading-tight">
+                            <div className="text-sm font-semibold">{displayName}</div>
+                        </div>
                     </div>
-                    <div className="leading-tight">
-                        <div className="text-sm font-semibold">{displayName}</div>
-                        {user.role && (
-                            <div className="text-[11px] uppercase text-muted-foreground">
-                                {user.role}
-                            </div>
-                        )}
-                    </div>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            (window as any).location.href = "/";
+                            logout();
+                        }}
+                        className="text-muted-foreground hover:text-foreground"
+                    >
+                        로그아웃
+                    </Button>
                 </div>
             );
         }

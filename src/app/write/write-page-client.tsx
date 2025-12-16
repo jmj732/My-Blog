@@ -60,9 +60,12 @@ const extensions = [
     slashCommand,
 ];
 
+import { useAuth } from "@/components/auth/auth-provider";
+
 interface WritePageClientProps {
-    user: {
+    user?: {
         name?: string | null;
+        nickname?: string | null;
         email?: string | null;
         image?: string | null;
     };
@@ -83,7 +86,11 @@ function parseInitialContent(raw?: string): JSONContent | undefined {
     }
 }
 
-export function WritePageClient({ user, initialPost, apiEndpoint = "/api/v1/posts" }: WritePageClientProps) {
+export function WritePageClient({ user: propUser, initialPost, apiEndpoint = "/api/v1/posts" }: WritePageClientProps) {
+    const { user: authUser } = useAuth();
+    // Prioritize authUser (client-side), fallback to propUser (server-side if provided), then Guest
+    const currentUser = authUser || propUser;
+
     const router = useRouter();
     const [title, setTitle] = useState(initialPost?.title ?? "");
     const [content, setContent] = useState<JSONContent | undefined>(
@@ -165,7 +172,7 @@ export function WritePageClient({ user, initialPost, apiEndpoint = "/api/v1/post
                                 {isEditing ? "글 수정" : "새 글 작성"}
                             </h1>
                             <p className="text-sm text-muted-foreground">
-                                {user?.name || user?.email || "Guest"}님, 환영합니다!
+                                {currentUser?.nickname || currentUser?.name || currentUser?.email || "Guest"}님, 환영합니다!
                             </p>
                         </div>
                     </div>
