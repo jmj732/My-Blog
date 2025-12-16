@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = useCallback(async () => {
         try {
-            const backendLogoutUrl = buildApiUrl("/logout"); // Standard Spring Security logout
+            const backendLogoutUrl = buildApiUrl("/api/v1/auth/logout"); // Standard Spring Security logout
             await fetch(backendLogoutUrl, {
                 method: "POST",
                 credentials: "include",
