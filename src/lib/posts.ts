@@ -16,12 +16,16 @@ export interface Post {
     } | null;
 }
 
-export interface PaginatedPosts {
+export type PostsCursor = {
+    createdAt: string;
+    id: string;
+};
+
+export type PostFeedType = "admin" | "community";
+
+export interface CursorPostsResult {
     posts: Post[];
-    total: number;
-    page: number;
-    pageSize: number;
-    totalPages: number;
+    nextCursor: PostsCursor | null;
 }
 
 type BackendAuthor = {
@@ -29,6 +33,26 @@ type BackendAuthor = {
     name?: string | null;
     email?: string | null;
     role?: string | null;
+};
+
+type BackendCursorPostRow = {
+    id: number | string;
+    slug: string;
+    title: string;
+    createdAt?: string;
+    authorId?: number | string;
+    authorName?: string;
+    authorRole?: string;
+    author?: BackendAuthor | null;
+    user?: BackendAuthor | null;
+};
+
+type BackendCursorPostsResponse = {
+    rows: BackendCursorPostRow[];
+    nextCursor?: {
+        createdAt: string;
+        id: number | string;
+    } | null;
 };
 
 function extractAuthorId(payload: {
@@ -76,105 +100,106 @@ function extractAuthorRole(payload: {
 }
 
 /**
- * Get paginated posts from backend API
+ * Get posts using cursor-based pagination.
  */
-export async function getPosts(page: number = 1, pageSize: number = 20): Promise<PaginatedPosts> {
-    const params = new URLSearchParams({
-        page: String(Math.max(page - 1, 0)),
-        pageSize: String(pageSize),
-        type: "admin",
+async function getPostsByCursor(params: {
+    limit?: number;
+    cursorCreatedAt?: string;
+    cursorId?: string;
+    type?: PostFeedType;
+}): Promise<CursorPostsResult> {
+    const query = new URLSearchParams({
+        limit: String(params.limit ?? 20),
     });
 
-    const data = await apiRequest<{
-        content: {
-            id: number | string;
-            slug: string;
-            title: string;
-            content: string;
-            authorId?: number | string;
-            authorName?: string;
-            authorRole?: string;
-            createdAt?: string;
-        }[];
-        totalElements: number;
-        totalPages: number;
-        number: number;
-        size: number;
-    }>(`/api/v1/posts?${params.toString()}`);
+    if (params.cursorCreatedAt && params.cursorId) {
+        query.set("cursorCreatedAt", params.cursorCreatedAt);
+        query.set("cursorId", params.cursorId);
+    }
 
-    const mappedPosts: Post[] = (data?.content ?? []).map((p) => ({
-        id: String(p.id),
-        title: p.title,
-        slug: p.slug,
-        content: p.content,
-        createdAt: p.createdAt ? new Date(p.createdAt) : null,
-        authorId: extractAuthorId(p),
+    if (params.type) {
+        query.set("type", params.type);
+    }
+
+    const data = await apiRequest<BackendCursorPostsResponse>(`/api/v1/posts/cursor?${query.toString()}`);
+
+    const mappedPosts: Post[] = (data?.rows ?? []).map((row) => ({
+        id: String(row.id),
+        title: row.title,
+        slug: row.slug,
+        content: "",
+        createdAt: row.createdAt ? new Date(row.createdAt) : null,
+        authorId: extractAuthorId(row),
         author: {
-            id: extractAuthorId(p),
-            name: extractAuthorName(p) || "jmj732",
+            id: extractAuthorId(row),
+            name: extractAuthorName(row) || null,
             email: "",
-            role: extractAuthorRole(p),
+            role: extractAuthorRole(row),
         },
     }));
 
     return {
         posts: mappedPosts,
-        total: data?.totalElements ?? mappedPosts.length,
-        page,
-        pageSize,
-        totalPages: data?.totalPages ?? 1,
+        nextCursor: data?.nextCursor
+            ? { createdAt: data.nextCursor.createdAt, id: String(data.nextCursor.id) }
+            : null,
     };
 }
 
+export async function getPosts(params?: {
+    limit?: number;
+    cursorCreatedAt?: string;
+    cursorId?: string;
+}): Promise<CursorPostsResult> {
+    return getPostsByCursor({ ...params, type: "admin" });
+}
+
+export async function getCommunityPosts(params?: {
+    limit?: number;
+    cursorCreatedAt?: string;
+    cursorId?: string;
+}): Promise<CursorPostsResult> {
+    return getPostsByCursor({ ...params, type: "community" });
+}
+
 /**
- * Get paginated Community posts from backend API
+ * Backward-compatible alias for lists without a type filter.
  */
-export async function getCommunityPosts(page: number = 1, pageSize: number = 20): Promise<PaginatedPosts> {
+export async function getPostsCursor(params?: {
+    limit?: number;
+    cursorCreatedAt?: string;
+    cursorId?: string;
+    type?: PostFeedType;
+}): Promise<CursorPostsResult> {
+    return getPostsByCursor(params ?? {});
+}
+
+/**
+ * Get recent posts (for sidebar, homepage, etc.) from backend API
+ */
+export async function getRecentPosts(limit: number = 5, type?: PostFeedType): Promise<Post[]> {
     const params = new URLSearchParams({
-        page: String(Math.max(page - 1, 0)),
-        pageSize: String(pageSize),
-        type: "community",
+        limit: String(limit),
     });
 
-    const data = await apiRequest<{
-        content: {
-            id: number | string;
-            slug: string;
-            title: string;
-            content: string;
-            authorId?: number | string;
-            authorName?: string;
-            authorRole?: string;
-            createdAt?: string;
-        }[];
-        totalElements: number;
-        totalPages: number;
-        number: number;
-        size: number;
-    }>(`/api/v1/posts?${params.toString()}`);
+    if (type) params.set("type", type);
 
-    const mappedPosts: Post[] = (data?.content ?? []).map((p) => ({
-        id: String(p.id),
-        title: p.title,
-        slug: p.slug,
-        content: p.content,
-        createdAt: p.createdAt ? new Date(p.createdAt) : null,
-        authorId: extractAuthorId(p),
+    const data = await apiRequest<BackendCursorPostsResponse>(`/api/v1/posts/cursor?${params.toString()}`);
+
+    return (data?.rows ?? []).map((row) => ({
+        id: String(row.id),
+        title: row.title,
+        slug: row.slug,
+        content: "",
+        createdAt: row.createdAt ? new Date(row.createdAt) : null,
+        authorId: extractAuthorId(row),
         author: {
-            id: extractAuthorId(p),
-            name: extractAuthorName(p) || "jmj732",
+            id: extractAuthorId(row),
+            name: extractAuthorName(row) || null,
             email: "",
-            role: extractAuthorRole(p),
+            role: extractAuthorRole(row),
         },
     }));
-
-    return {
-        posts: mappedPosts,
-        total: data?.totalElements ?? mappedPosts.length,
-        page,
-        pageSize,
-        totalPages: data?.totalPages ?? 1,
-    };
 }
 
 /**
@@ -213,42 +238,4 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
             role: extractAuthorRole(data),
         },
     };
-}
-
-/**
- * Get recent posts (for sidebar, homepage, etc.) from backend API
- */
-export async function getRecentPosts(limit: number = 5): Promise<Post[]> {
-    const params = new URLSearchParams({
-        page: "0",
-        pageSize: String(limit),
-    });
-
-    const data = await apiRequest<{
-        content: {
-            id: number | string;
-            slug: string;
-            title: string;
-            content: string;
-            createdAt?: string;
-            authorId?: number | string;
-            authorName?: string;
-            authorRole?: string;
-        }[];
-    }>(`/api/v1/posts?${params.toString()}`);
-
-    return (data?.content ?? []).map((p) => ({
-        id: String(p.id),
-        title: p.title,
-        slug: p.slug,
-        content: p.content,
-        createdAt: p.createdAt ? new Date(p.createdAt) : null,
-        authorId: extractAuthorId(p),
-        author: {
-            id: extractAuthorId(p),
-            name: extractAuthorName(p) || "jmj732",
-            email: "",
-            role: extractAuthorRole(p),
-        },
-    }));
 }

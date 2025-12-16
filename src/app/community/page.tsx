@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, Users, ChevronLeft, ChevronRight, PenLine } from "lucide-react";
+import { ArrowRight, Users, ChevronRight, PenLine } from "lucide-react";
 import { getCommunityPosts } from "@/lib/posts";
 import { Button } from "@/components/ui/button";
 
@@ -16,13 +16,21 @@ export const metadata: Metadata = {
 };
 
 interface CommunityPageProps {
-    searchParams: Promise<{ page?: string }>;
+    searchParams: Promise<{ limit?: string; cursorCreatedAt?: string; cursorId?: string }>;
 }
 
 export default async function CommunityPage({ searchParams }: CommunityPageProps) {
     const params = await searchParams;
-    const currentPage = Number(params.page) || 1;
-    const { posts, total, totalPages } = await getCommunityPosts(currentPage, 20);
+    const limit = Number(params.limit) || 20;
+    const cursorCreatedAt = params.cursorCreatedAt;
+    const cursorId = params.cursorId;
+    const hasCursor = Boolean(cursorCreatedAt && cursorId);
+
+    const { posts, nextCursor } = await getCommunityPosts({
+        limit,
+        cursorCreatedAt,
+        cursorId,
+    });
 
     return (
         <section className="container py-16 md:py-24">
@@ -35,7 +43,7 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
                     커뮤니티 포스트
                 </h1>
                 <p className="mt-4 text-lg text-muted-foreground">
-                    총 <span className="font-bold text-primary">{total.toLocaleString()}</span>개의 커뮤니티 포스트
+                    최신 <span className="font-bold text-primary">{posts.length.toLocaleString()}</span>개 커뮤니티 포스트
                 </p>
 
                 <Link href="/community/write" className="inline-block mt-6">
@@ -83,65 +91,31 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
                 ))}
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
+            {/* Cursor Pagination */}
+            {(hasCursor || nextCursor) && (
                 <div className="mt-12 flex items-center justify-center gap-2">
-                    <Link
-                        href={`/community?page=${currentPage - 1}`}
-                        className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
-                    >
-                        <Button
-                            variant="outline"
-                            disabled={currentPage <= 1}
-                            className="border-2 border-border hover:border-primary rounded-none"
+                    {hasCursor && (
+                        <Link href="/community">
+                            <Button
+                                variant="outline"
+                                className="border-2 border-border hover:border-primary rounded-none"
+                            >
+                                처음으로
+                            </Button>
+                        </Link>
+                    )}
+                    {nextCursor && (
+                        <Link
+                            href={`/community?limit=${encodeURIComponent(String(limit))}&cursorCreatedAt=${encodeURIComponent(
+                                nextCursor.createdAt
+                            )}&cursorId=${encodeURIComponent(nextCursor.id)}`}
                         >
-                            <ChevronLeft className="w-4 h-4 mr-2" />
-                            이전
-                        </Button>
-                    </Link>
-
-                    <div className="flex items-center gap-2">
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                            let pageNum;
-                            if (totalPages <= 5) {
-                                pageNum = i + 1;
-                            } else if (currentPage <= 3) {
-                                pageNum = i + 1;
-                            } else if (currentPage >= totalPages - 2) {
-                                pageNum = totalPages - 4 + i;
-                            } else {
-                                pageNum = currentPage - 2 + i;
-                            }
-
-                            return (
-                                <Link key={pageNum} href={`/community?page=${pageNum}`}>
-                                    <Button
-                                        variant={currentPage === pageNum ? "default" : "outline"}
-                                        className={`w-10 h-10 rounded-none border-2 ${currentPage === pageNum
-                                            ? "bg-primary text-primary-foreground border-primary"
-                                            : "border-border hover:border-primary"
-                                            }`}
-                                    >
-                                        {pageNum}
-                                    </Button>
-                                </Link>
-                            );
-                        })}
-                    </div>
-
-                    <Link
-                        href={`/community?page=${currentPage + 1}`}
-                        className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
-                    >
-                        <Button
-                            variant="outline"
-                            disabled={currentPage >= totalPages}
-                            className="border-2 border-border hover:border-primary rounded-none"
-                        >
-                            다음
-                            <ChevronRight className="w-4 h-4 ml-2" />
-                        </Button>
-                    </Link>
+                            <Button className="border-2 border-primary rounded-none uppercase font-bold">
+                                다음
+                                <ChevronRight className="w-4 h-4 ml-2" />
+                            </Button>
+                        </Link>
+                    )}
                 </div>
             )}
         </section>
