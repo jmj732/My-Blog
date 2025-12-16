@@ -27,6 +27,25 @@ export function extractTextFromNovelContent(content: string | unknown): string {
     try {
       jsonContent = JSON.parse(content);
     } catch {
+      // JSON 파싱 실패 시(예: 잘린 JSON) text 노드만이라도 휴리스틱으로 추출
+      if (content.includes("\"text\"") && content.includes("\"type\"")) {
+        const matches = Array.from(content.matchAll(/"text"\s*:\s*"([^"]*)"/g));
+        const extracted = matches
+          .map((m) => {
+            const raw = m[1] ?? "";
+            try {
+              return JSON.parse(`"${raw}"`) as string;
+            } catch {
+              return raw;
+            }
+          })
+          .filter(Boolean)
+          .join(" ")
+          .trim();
+
+        if (extracted) return extracted;
+      }
+
       // JSON 파싱 실패 시 원본 문자열 반환
       return content;
     }
