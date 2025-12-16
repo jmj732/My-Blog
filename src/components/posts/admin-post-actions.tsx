@@ -21,7 +21,7 @@ export function AdminPostActions({ slug }: AdminPostActionsProps) {
 
         setIsDeleting(true);
         try {
-            await apiRequest<void>(`/api/v1/posts/${encodeURIComponent(slug)}`, { method: "DELETE" });
+            await apiRequest<void>(`/api/v1/posts/${encodeURIComponent(slug)}`, { method: "DELETE", useProxy: true });
             alert("글이 삭제되었습니다.");
             router.push("/posts");
         } catch (error) {

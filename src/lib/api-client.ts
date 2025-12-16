@@ -16,14 +16,32 @@ type ApiResponse<T> = {
     error?: string | null;
 };
 
-export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
-    const url = buildApiUrl(path);
+type ApiRequestOptions = RequestInit & {
+    useProxy?: boolean;
+};
+
+export async function apiRequest<T>(path: string, init?: ApiRequestOptions): Promise<T> {
+    const useProxy = init?.useProxy ?? false;
+
+    // If useProxy is true, use the local proxy route to forward cookies
+    // Otherwise, call the backend directly
+    let url: string;
+    if (useProxy) {
+        // Convert /api/v1/... to /api/proxy/v1/...
+        const proxyPath = path.replace(/^\/api\//, "/api/proxy/");
+        url = proxyPath;
+    } else {
+        url = buildApiUrl(path);
+    }
+
+    const { useProxy: _, ...fetchInit } = init || {};
+
     const response = await fetch(url, {
         credentials: "include",
-        ...init,
+        ...fetchInit,
         headers: {
             "Content-Type": "application/json",
-            ...(init?.headers || {}),
+            ...(fetchInit?.headers || {}),
         },
     });
 

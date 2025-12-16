@@ -41,6 +41,7 @@ export default function CommentItem({
         try {
             await apiRequest<void>(`/api/v1/comments/${comment.id}`, {
                 method: "DELETE",
+                useProxy: true,
             });
             onCommentChange();
         } catch (error) {

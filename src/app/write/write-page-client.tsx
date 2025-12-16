@@ -125,6 +125,7 @@ export function WritePageClient({ user: propUser, initialPost, apiEndpoint = "/a
                     title,
                     content: JSON.stringify(content), // Serialize JSONContent
                 }),
+                useProxy: true,
             });
             alert(isEdit ? "글이 수정되었습니다!" : "글이 성공적으로 저장되었습니다!");
             router.push(`/posts/${data?.slug ?? initialPost?.slug}`);
@@ -144,6 +145,7 @@ export function WritePageClient({ user: propUser, initialPost, apiEndpoint = "/a
         try {
             await apiRequest<void>(`/api/v1/posts/${initialPost.slug}`, {
                 method: "DELETE",
+                useProxy: true,
             });
 
             alert("글이 삭제되었습니다.");

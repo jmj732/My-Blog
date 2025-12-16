@@ -40,12 +40,14 @@ export default function CommentForm({
                 await apiRequest<void>(`/api/v1/comments/${commentId}`, {
                     method: "PATCH",
                     body: JSON.stringify({ content }),
+                    useProxy: true,
                 });
             } else {
                 // Create new comment
                 await apiRequest<void>(`/api/v1/comments`, {
                     method: "POST",
                     body: JSON.stringify({ postId, content, parentId }),
+                    useProxy: true,
                 });
             }
 
