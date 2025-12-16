@@ -45,11 +45,12 @@ export function Header() {
         }
 
         return (
-            <Link href="/api/auth/login">
-                <Button className="bg-primary text-primary-foreground hover:opacity-90 rounded-none font-bold">
-                    로그인
-                </Button>
-            </Link>
+            <Button
+                onClick={() => window.location.href = '/api/auth/login'}
+                className="bg-primary text-primary-foreground hover:opacity-90 rounded-none font-bold"
+            >
+                로그인
+            </Button>
         );
     })();
 
