@@ -54,13 +54,11 @@ export async function getPosts(page: number = 1, pageSize: number = 20): Promise
         slug: p.slug,
         content: p.content,
         createdAt: p.createdAt ? new Date(p.createdAt) : null,
-        author: p.authorName
-            ? {
-                name: p.authorName,
-                email: "",
-                role: p.authorRole ?? "user",
-            }
-            : null,
+        author: {
+            name: p.authorName || "jmj732",
+            email: "",
+            role: p.authorRole ?? "user",
+        },
     }));
 
     return {
@@ -104,13 +102,11 @@ export async function getCommunityPosts(page: number = 1, pageSize: number = 20)
         slug: p.slug,
         content: p.content,
         createdAt: p.createdAt ? new Date(p.createdAt) : null,
-        author: p.authorName
-            ? {
-                name: p.authorName,
-                email: "",
-                role: p.authorRole ?? "user",
-            }
-            : null,
+        author: {
+            name: p.authorName || "jmj732",
+            email: "",
+            role: p.authorRole ?? "user",
+        },
     }));
 
     return {
@@ -144,13 +140,11 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
         slug: data.slug,
         content: data.content,
         createdAt: data.createdAt ? new Date(data.createdAt) : null,
-        author: data.authorName
-            ? {
-                name: data.authorName,
-                email: "",
-                role: data.authorRole ?? "user",
-            }
-            : null,
+        author: {
+            name: data.authorName || "jmj732",
+            email: "",
+            role: data.authorRole ?? "user",
+        },
     };
 }
 
@@ -181,12 +175,10 @@ export async function getRecentPosts(limit: number = 5): Promise<Post[]> {
         slug: p.slug,
         content: p.content,
         createdAt: p.createdAt ? new Date(p.createdAt) : null,
-        author: p.authorName
-            ? {
-                name: p.authorName,
-                email: "",
-                role: p.authorRole ?? "user",
-            }
-            : null,
+        author: {
+            name: p.authorName || "jmj732",
+            email: "",
+            role: p.authorRole ?? "user",
+        },
     }));
 }
