@@ -25,8 +25,9 @@ async function checkProxy() {
             console.log("⚠️ Domain attribute still present:", setCookie);
         }
 
-    } catch (e: any) {
-        console.error("Error:", e.message);
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        console.error("Error:", message);
     }
 }
 

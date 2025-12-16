@@ -4,7 +4,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { cookies } from "next/headers";
 import { getPostBySlug } from "@/lib/posts";
-import { getApiBase } from "@/lib/api-client";
+import { getApiBase, parseJsonWithBigIntProtection } from "@/lib/api-client";
+import { getUserIdFromAuthMeData, getUserRoleFromAuthMeData, hasAdminRole } from "@/lib/auth";
 import CommentSection from "@/components/comments/comment-section";
 import { PostActions } from "@/components/posts/post-actions";
 
@@ -39,8 +40,22 @@ async function getCurrentUser() {
             return null;
         }
 
-        const payload = await res.json();
-        return payload?.data ?? null;
+        const text = await res.text();
+        const payload = parseJsonWithBigIntProtection(text);
+        const data =
+            payload && typeof payload === "object" && "data" in payload
+                ? (payload as { data?: unknown }).data
+                : payload;
+
+        if (!data || typeof data !== "object") return null;
+
+        const normalizedId = getUserIdFromAuthMeData(data);
+        const normalizedRole = getUserRoleFromAuthMeData(data);
+        return {
+            ...(data as Record<string, unknown>),
+            ...(normalizedId ? { id: normalizedId } : {}),
+            ...(normalizedRole ? { role: normalizedRole } : {}),
+        };
     } catch (err) {
         console.error("[getCurrentUser] Failed:", err);
         return null;
@@ -153,8 +168,9 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
 
     // Get current user and check permissions
     const user = await getCurrentUser();
-    const isAdmin = user?.role === "ADMIN";
-    const isOwner = user?.id && post.author?.id && String(user.id) === post.author.id;
+    const isAdmin = hasAdminRole(user?.role, (user as { roles?: unknown })?.roles);
+    const postAuthorId = post.authorId || post.author?.id || "";
+    const isOwner = !!user?.id && !!postAuthorId && String(user.id) === postAuthorId;
     const canEdit = isAdmin || isOwner;
     const currentUserId = user?.id ? String(user.id) : undefined;
 

@@ -26,8 +26,9 @@ async function checkCookies() {
         console.log("Status:", res2.status);
         console.log("Set-Cookie:", res2.headers.get("set-cookie"));
 
-    } catch (e: any) {
-        console.error("Error:", e.message);
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        console.error("Error:", message);
     }
 }
 

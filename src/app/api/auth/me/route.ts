@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getApiBase } from "@/lib/api-client";
+import { getApiBase, parseJsonWithBigIntProtection } from "@/lib/api-client";
+import { getUserIdFromAuthMeData, getUserRoleFromAuthMeData } from "@/lib/auth";
 
 /**
  * GET /api/auth/me
@@ -44,8 +45,22 @@ export async function GET() {
             );
         }
 
-        const payload = await res.json();
+        const text = await res.text();
+        const payload = parseJsonWithBigIntProtection(text);
         console.log("[Proxy Me] Backend payload:", payload);
+
+        if (payload && typeof payload === "object" && "data" in payload) {
+            const data = (payload as { data?: unknown }).data;
+            const normalizedId = getUserIdFromAuthMeData(data);
+            const normalizedRole = getUserRoleFromAuthMeData(data);
+            if (data && typeof data === "object") {
+                (payload as { data: Record<string, unknown> }).data = {
+                    ...(data as Record<string, unknown>),
+                    ...(normalizedId ? { id: normalizedId } : {}),
+                    ...(normalizedRole ? { role: normalizedRole } : {}),
+                };
+            }
+        }
 
         // Forward any Set-Cookie headers from backend to browser
         const response = NextResponse.json(payload);

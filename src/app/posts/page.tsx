@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { ArrowRight, PenTool, ChevronLeft, ChevronRight } from "lucide-react";
 import { getPosts } from "@/lib/posts";
 import { Button } from "@/components/ui/button";
+import { hasAdminRole } from "@/lib/auth";
 
 const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
     year: "numeric",
@@ -56,7 +57,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
                             <span className="border border-border bg-muted px-3 py-1 font-mono text-xs" suppressHydrationWarning>
                                 {post.createdAt ? dateFormatter.format(new Date(post.createdAt)) : "날짜 없음"}
                             </span>
-                            {post.author?.role === "admin" ? (
+                            {hasAdminRole(post.author?.role) ? (
                                 <span className="font-mono uppercase tracking-wide text-xs text-primary font-bold">
                                     ADMIN
                                 </span>

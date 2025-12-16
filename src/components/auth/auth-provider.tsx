@@ -8,6 +8,7 @@ import {
     useState,
     type ReactNode,
 } from "react";
+import { getUserIdFromAuthMeData, getUserRoleFromAuthMeData } from "@/lib/auth";
 
 type AuthUser = {
     id?: string;
@@ -56,12 +57,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const data = payload?.data;
 
             if (data) {
+                const normalizedId = getUserIdFromAuthMeData(data);
+                const normalizedRole = getUserRoleFromAuthMeData(data);
                 const mappedUser: AuthUser = {
-                    id: data.id ? String(data.id) : undefined,
+                    id: normalizedId,
                     name: data.name ?? data.email ?? null,
                     nickname: data.nickname ?? data.name ?? null,
                     email: data.email ?? null,
-                    role: data.role ?? null,
+                    role: normalizedRole,
                     avatarUrl: data.image ?? data.avatarUrl ?? null,
                 };
                 setUser(mappedUser);

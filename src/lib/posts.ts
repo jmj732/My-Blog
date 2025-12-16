@@ -7,6 +7,7 @@ export interface Post {
     slug: string;
     content: string;
     createdAt: Date | null;
+    authorId?: string;
     author?: {
         id: string;
         name: string | null;
@@ -21,6 +22,57 @@ export interface PaginatedPosts {
     page: number;
     pageSize: number;
     totalPages: number;
+}
+
+type BackendAuthor = {
+    id?: number | string;
+    name?: string | null;
+    email?: string | null;
+    role?: string | null;
+};
+
+function extractAuthorId(payload: {
+    authorId?: number | string;
+    userId?: number | string;
+    author?: BackendAuthor | null;
+    user?: BackendAuthor | null;
+}): string {
+    const direct =
+        payload.authorId ??
+        payload.userId ??
+        payload.author?.id ??
+        payload.user?.id;
+    return direct !== undefined && direct !== null ? String(direct) : "";
+}
+
+function extractAuthorName(payload: {
+    authorName?: string;
+    userName?: string;
+    author?: BackendAuthor | null;
+    user?: BackendAuthor | null;
+}): string | null {
+    return (
+        payload.authorName ??
+        payload.userName ??
+        payload.author?.name ??
+        payload.user?.name ??
+        null
+    );
+}
+
+function extractAuthorRole(payload: {
+    authorRole?: string;
+    userRole?: string;
+    author?: BackendAuthor | null;
+    user?: BackendAuthor | null;
+}): string {
+    return (
+        payload.authorRole ??
+        payload.userRole ??
+        payload.author?.role ??
+        payload.user?.role ??
+        "user"
+    );
 }
 
 /**
@@ -56,11 +108,12 @@ export async function getPosts(page: number = 1, pageSize: number = 20): Promise
         slug: p.slug,
         content: p.content,
         createdAt: p.createdAt ? new Date(p.createdAt) : null,
+        authorId: extractAuthorId(p),
         author: {
-            id: p.authorId ? String(p.authorId) : "",
-            name: p.authorName || "jmj732",
+            id: extractAuthorId(p),
+            name: extractAuthorName(p) || "jmj732",
             email: "",
-            role: p.authorRole ?? "user",
+            role: extractAuthorRole(p),
         },
     }));
 
@@ -106,11 +159,12 @@ export async function getCommunityPosts(page: number = 1, pageSize: number = 20)
         slug: p.slug,
         content: p.content,
         createdAt: p.createdAt ? new Date(p.createdAt) : null,
+        authorId: extractAuthorId(p),
         author: {
-            id: p.authorId ? String(p.authorId) : "",
-            name: p.authorName || "jmj732",
+            id: extractAuthorId(p),
+            name: extractAuthorName(p) || "jmj732",
             email: "",
-            role: p.authorRole ?? "user",
+            role: extractAuthorRole(p),
         },
     }));
 
@@ -136,6 +190,11 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
         authorId?: number | string;
         authorName?: string;
         authorRole?: string;
+        userId?: number | string;
+        userName?: string;
+        userRole?: string;
+        author?: BackendAuthor | null;
+        user?: BackendAuthor | null;
     } | null>(`/api/v1/posts/${encodeURIComponent(slug)}`);
 
     if (!data) return null;
@@ -146,11 +205,12 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
         slug: data.slug,
         content: data.content,
         createdAt: data.createdAt ? new Date(data.createdAt) : null,
+        authorId: extractAuthorId(data),
         author: {
-            id: data.authorId ? String(data.authorId) : "",
-            name: data.authorName || "jmj732",
+            id: extractAuthorId(data),
+            name: extractAuthorName(data) || "jmj732",
             email: "",
-            role: data.authorRole ?? "user",
+            role: extractAuthorRole(data),
         },
     };
 }
@@ -183,11 +243,12 @@ export async function getRecentPosts(limit: number = 5): Promise<Post[]> {
         slug: p.slug,
         content: p.content,
         createdAt: p.createdAt ? new Date(p.createdAt) : null,
+        authorId: extractAuthorId(p),
         author: {
-            id: p.authorId ? String(p.authorId) : "",
-            name: p.authorName || "jmj732",
+            id: extractAuthorId(p),
+            name: extractAuthorName(p) || "jmj732",
             email: "",
-            role: p.authorRole ?? "user",
+            role: extractAuthorRole(p),
         },
     }));
 }

@@ -6,6 +6,7 @@ import { Moon, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchDialogButton } from "@/components/search/search-dialog-button";
 import { useAuth } from "@/components/auth/auth-provider";
+import { hasAdminRole } from "@/lib/auth";
 
 export function Header() {
     const { user, loading, logout } = useAuth();
@@ -77,7 +78,7 @@ export function Header() {
                     <Link href="/community" className="hover:text-primary transition-colors">
                         커뮤니티
                     </Link>
-                    {user?.role === "ADMIN" && (
+                    {hasAdminRole(user?.role) && (
                         <Link href="/write" className="hover:text-primary transition-colors">
                             글쓰기
                         </Link>

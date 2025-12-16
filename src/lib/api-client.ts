@@ -10,6 +10,12 @@ export function buildApiUrl(path: string) {
     return `${base}${normalizedPath}`;
 }
 
+export function parseJsonWithBigIntProtection(text: string): unknown {
+    if (!text) return null;
+    const safeText = text.replace(/:(\s*)(\d{15,})(\s*)([,\}])/g, ':"$2"$3$4');
+    return JSON.parse(safeText);
+}
+
 type ApiResponse<T> = {
     success?: boolean;
     data?: T;
@@ -34,7 +40,8 @@ export async function apiRequest<T>(path: string, init?: ApiRequestOptions): Pro
         url = buildApiUrl(path);
     }
 
-    const { useProxy: _, ...fetchInit } = init || {};
+    const { useProxy: ignoredUseProxy, ...fetchInit } = init || {};
+    void ignoredUseProxy;
 
     const response = await fetch(url, {
         credentials: "include",
@@ -47,14 +54,8 @@ export async function apiRequest<T>(path: string, init?: ApiRequestOptions): Pro
 
     let body: ApiResponse<T> | T | null = null;
     try {
-        // Parse JSON with big number handling to prevent precision loss
-        // Snowflake IDs are 18+ digits which exceed JavaScript's safe integer limit
         const text = await response.text();
-        const safeText = text.replace(
-            /:(\s*)(\d{15,})(\s*)([,\}])/g,
-            ':"$2"$3$4'
-        );
-        body = JSON.parse(safeText);
+        body = parseJsonWithBigIntProtection(text) as ApiResponse<T> | T | null;
     } catch {
         body = null;
     }
