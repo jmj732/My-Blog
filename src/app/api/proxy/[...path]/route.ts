@@ -91,3 +91,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
     return proxyRequest(request, "DELETE");
 }
+
+export async function GET(request: NextRequest) {
+    return proxyRequest(request, "GET");
+}

@@ -4,11 +4,12 @@ import { getPostBySlug } from "@/lib/posts";
 import { WritePageClient } from "../write-page-client";
 
 interface EditPageProps {
-    params: { slug: string };
+    params: Promise<{ slug: string }>;
 }
 
 export default async function EditPage({ params }: EditPageProps) {
-    const post = await getPostBySlug(params.slug);
+    const { slug } = await params;
+    const post = await getPostBySlug(slug);
     if (!post) {
         notFound();
     }
