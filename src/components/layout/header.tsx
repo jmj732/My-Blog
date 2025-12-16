@@ -34,10 +34,11 @@ export function Header() {
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => {
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            (window as any).location.href = "/";
-                            logout();
+                        onClick={async () => {
+                            await logout();
+                            // Force reload to clear any client state/cookies if needed, 
+                            // though logout() clears state. A reload ensures a fresh start.
+                            window.location.href = "/";
                         }}
                         className="text-muted-foreground hover:text-foreground"
                     >
