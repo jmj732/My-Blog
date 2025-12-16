@@ -52,7 +52,27 @@ export async function GET() {
 
         const setCookieHeader = res.headers.get("set-cookie");
         if (setCookieHeader) {
-            response.headers.set("set-cookie", setCookieHeader);
+            console.log("[Proxy Me] Set-Cookie header from backend:", setCookieHeader);
+
+            // Parse cookies from Set-Cookie header and set them on frontend
+            const cookies = setCookieHeader.split(",").map((c) => c.trim());
+            for (const cookie of cookies) {
+                // Extract cookie name and value
+                const match = cookie.match(/^([^=]+)=([^;]+)/);
+                if (match) {
+                    const [, name, value] = match;
+                    if (name === "JWT_TOKEN" || name === "JSESSIONID") {
+                        console.log(`[Proxy Me] Setting ${name} cookie on frontend`);
+                        response.cookies.set(name, value, {
+                            path: "/",
+                            httpOnly: true,
+                            secure: process.env.NODE_ENV === "production",
+                            sameSite: "lax",
+                            maxAge: 60 * 60 * 24 * 7, // 7일
+                        });
+                    }
+                }
+            }
         }
 
         return response;
