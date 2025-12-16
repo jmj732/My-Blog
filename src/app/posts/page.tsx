@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowRight, PenTool, ChevronRight } from "lucide-react";
+import { ArrowRight, PenTool, ChevronLeft, ChevronRight } from "lucide-react";
 import { getPosts } from "@/lib/posts";
 import { Button } from "@/components/ui/button";
+import { hasAdminRole } from "@/lib/auth";
 
 const dateFormatter = new Intl.DateTimeFormat("ko-KR", {
     year: "numeric",
@@ -16,21 +17,13 @@ export const metadata: Metadata = {
 };
 
 interface PostsPageProps {
-    searchParams: Promise<{ limit?: string; cursorCreatedAt?: string; cursorId?: string }>;
+    searchParams: Promise<{ page?: string }>;
 }
 
 export default async function PostsPage({ searchParams }: PostsPageProps) {
     const params = await searchParams;
-    const limit = Number(params.limit) || 20;
-    const cursorCreatedAt = params.cursorCreatedAt;
-    const cursorId = params.cursorId;
-    const hasCursor = Boolean(cursorCreatedAt && cursorId);
-
-    const { posts, nextCursor } = await getPosts({
-        limit,
-        cursorCreatedAt,
-        cursorId,
-    });
+    const currentPage = Number(params.page) || 1;
+    const { posts, total, totalPages } = await getPosts(currentPage, 20);
 
     return (
         <section className="container py-16 md:py-24">
@@ -43,7 +36,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
                     전체 포스트
                 </h1>
                 <p className="mt-4 text-lg text-muted-foreground">
-                    최신 <span className="font-bold text-primary">{posts.length.toLocaleString()}</span>개 포스트
+                    총 <span className="font-bold text-primary">{total.toLocaleString()}</span>개의 포스트
                 </p>
             </div>
 
@@ -64,9 +57,15 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
                             <span className="border border-border bg-muted px-3 py-1 font-mono text-xs" suppressHydrationWarning>
                                 {post.createdAt ? dateFormatter.format(new Date(post.createdAt)) : "날짜 없음"}
                             </span>
-                            <span className="font-mono uppercase tracking-wide text-xs text-primary font-bold">
-                                ADMIN
-                            </span>
+                            {hasAdminRole(post.author?.role) ? (
+                                <span className="font-mono uppercase tracking-wide text-xs text-primary font-bold">
+                                    ADMIN
+                                </span>
+                            ) : (
+                                <span className="font-mono uppercase tracking-wide text-xs text-muted-foreground font-bold">
+                                    {post.author?.name || "사용자"}
+                                </span>
+                            )}
                         </div>
                         <h2 className="mt-4 text-2xl font-bold tracking-tight group-hover:text-primary transition-colors">
                             {post.title}
@@ -79,31 +78,65 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
                 ))}
             </div>
 
-            {/* Cursor Pagination */}
-            {(hasCursor || nextCursor) && (
+            {/* Pagination */}
+            {totalPages > 1 && (
                 <div className="mt-12 flex items-center justify-center gap-2">
-                    {hasCursor && (
-                        <Link href="/posts">
-                            <Button
-                                variant="outline"
-                                className="border-2 border-border hover:border-primary rounded-none"
-                            >
-                                처음으로
-                            </Button>
-                        </Link>
-                    )}
-                    {nextCursor && (
-                        <Link
-                            href={`/posts?limit=${encodeURIComponent(String(limit))}&cursorCreatedAt=${encodeURIComponent(
-                                nextCursor.createdAt
-                            )}&cursorId=${encodeURIComponent(nextCursor.id)}`}
+                    <Link
+                        href={`/posts?page=${currentPage - 1}`}
+                        className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+                    >
+                        <Button
+                            variant="outline"
+                            disabled={currentPage <= 1}
+                            className="border-2 border-border hover:border-primary rounded-none"
                         >
-                            <Button className="border-2 border-primary rounded-none uppercase font-bold">
-                                다음
-                                <ChevronRight className="w-4 h-4 ml-2" />
-                            </Button>
-                        </Link>
-                    )}
+                            <ChevronLeft className="w-4 h-4 mr-2" />
+                            이전
+                        </Button>
+                    </Link>
+
+                    <div className="flex items-center gap-2">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let pageNum;
+                            if (totalPages <= 5) {
+                                pageNum = i + 1;
+                            } else if (currentPage <= 3) {
+                                pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                                pageNum = totalPages - 4 + i;
+                            } else {
+                                pageNum = currentPage - 2 + i;
+                            }
+
+                            return (
+                                <Link key={pageNum} href={`/posts?page=${pageNum}`}>
+                                    <Button
+                                        variant={currentPage === pageNum ? "default" : "outline"}
+                                        className={`w-10 h-10 rounded-none border-2 ${currentPage === pageNum
+                                            ? "bg-primary text-primary-foreground border-primary"
+                                            : "border-border hover:border-primary"
+                                            }`}
+                                    >
+                                        {pageNum}
+                                    </Button>
+                                </Link>
+                            );
+                        })}
+                    </div>
+
+                    <Link
+                        href={`/posts?page=${currentPage + 1}`}
+                        className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+                    >
+                        <Button
+                            variant="outline"
+                            disabled={currentPage >= totalPages}
+                            className="border-2 border-border hover:border-primary rounded-none"
+                        >
+                            다음
+                            <ChevronRight className="w-4 h-4 ml-2" />
+                        </Button>
+                    </Link>
                 </div>
             )}
         </section>
