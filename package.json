@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "keep-alive": "tsx scripts/keep-alive.ts",
-    "sync-posts": "tsx scripts/sync-posts.ts"
+    "sync-posts": "tsx scripts/sync-posts.ts",
+    "watch-posts": "tsx scripts/watch-posts.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -34,6 +35,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
+    "chokidar": "^4.0.3",
     "eslint": "^9",
     "eslint-config-next": "16.0.7",
     "tailwindcss": "^4",
