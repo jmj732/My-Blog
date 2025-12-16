@@ -36,9 +36,7 @@ export function Header() {
                         size="sm"
                         onClick={async () => {
                             await logout();
-                            // Force reload to clear any client state/cookies if needed, 
-                            // though logout() clears state. A reload ensures a fresh start.
-                            window.location.href = "/";
+                            console.log("Logout complete, staying on current page");
                         }}
                         className="text-muted-foreground hover:text-foreground"
                     >

@@ -8,7 +8,6 @@ import {
     useState,
     type ReactNode,
 } from "react";
-import { buildApiUrl } from "@/lib/api-client";
 
 type AuthUser = {
     id?: string;
@@ -35,19 +34,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [error, setError] = useState<string | null>(null);
 
     const fetchMe = useCallback(async () => {
-        const backendMeUrl = buildApiUrl("/api/v1/auth/me");
+        // Use local proxy instead of backend directly
+        const proxyMeUrl = "/api/auth/me";
         setLoading(true);
+        console.log("[AuthProvider] Fetching user from proxy:", proxyMeUrl);
         try {
-            const res = await fetch(backendMeUrl, {
+            const res = await fetch(proxyMeUrl, {
                 credentials: "include",
                 cache: "no-store",
             });
 
-            if (res.status === 401) {
-                setUser(null);
-                setError(null);
-                return;
-            }
+            console.log("[AuthProvider] Proxy response status:", res.status);
 
             if (!res.ok) {
                 const message = res.statusText || "Failed to load auth";
@@ -55,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
 
             const payload = await res.json();
+            console.log("[AuthProvider] Proxy payload:", payload);
             const data = payload?.data;
 
             if (data) {
@@ -72,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
             setError(null);
         } catch (err) {
-            console.error("Failed to fetch auth state:", err);
+            console.error("[AuthProvider] Failed to fetch auth state:", err);
             setUser(null);
             setError(err instanceof Error ? err.message : String(err));
         } finally {
@@ -85,22 +83,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [fetchMe]);
 
     const logout = useCallback(async () => {
-        console.log("Logout initiated");
+        console.log("[AuthProvider] Logout initiated");
         try {
-            const backendLogoutUrl = buildApiUrl("/api/v1/auth/logout"); // Standard Spring Security logout
-            console.log("Sending logout request to:", backendLogoutUrl);
+            // Use local proxy instead of backend directly
+            const proxyLogoutUrl = "/api/auth/logout";
+            console.log("[AuthProvider] Sending logout request to proxy:", proxyLogoutUrl);
 
-            const res = await fetch(backendLogoutUrl, {
+            const res = await fetch(proxyLogoutUrl, {
                 method: "POST",
                 credentials: "include",
             });
-            console.log("Logout response status:", res.status, res.statusText);
+            console.log("[AuthProvider] Logout response status:", res.status, res.statusText);
 
             // Even if the backend fails, we accept it as logged out on frontend
         } catch (err) {
-            console.error("Logout failed with error:", err);
+            console.error("[AuthProvider] Logout failed with error:", err);
         } finally {
-            console.log("Clearing local user state");
+            console.log("[AuthProvider] Clearing local user state");
             setUser(null);
             setError(null);
         }
