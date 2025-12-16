@@ -1,3 +1,4 @@
+import React from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -86,48 +87,75 @@ function extractText(node?: NovelNode): string {
 function renderNovelContent(jsonString: string) {
     try {
         const parsed = JSON.parse(jsonString) as NovelDocument;
-        const nodes = Array.isArray(parsed.content) ? parsed.content : [];
+        const content = Array.isArray(parsed.content) ? parsed.content : [];
 
-        return nodes.map((node, idx) => {
-            if (node.type === "heading") {
-                const text = extractText(node);
-                const level = node.attrs?.level ?? 1;
-                const sizeClasses: Record<number, string> = {
-                    1: "text-4xl font-black uppercase tracking-tighter mt-8",
-                    2: "text-3xl font-bold uppercase tracking-tight mt-10",
-                    3: "text-2xl font-bold uppercase tracking-tight mt-8",
-                };
+        const renderNodes = (nodes: NovelNode[]): React.ReactNode[] => {
+            return nodes.map((node, idx) => {
+                if (node.type === "heading") {
+                    const text = extractText(node);
+                    const level = node.attrs?.level ?? 1;
+                    const sizeClasses: Record<number, string> = {
+                        1: "text-4xl font-black uppercase tracking-tighter mt-8",
+                        2: "text-3xl font-bold uppercase tracking-tight mt-10",
+                        3: "text-2xl font-bold uppercase tracking-tight mt-8",
+                    };
 
-                if (level === 1) return <h1 key={idx} className={sizeClasses[1]}>{text}</h1>;
-                if (level === 2) return <h2 key={idx} className={sizeClasses[2]}>{text}</h2>;
-                if (level === 3) return <h3 key={idx} className={sizeClasses[3]}>{text}</h3>;
-            }
+                    const Tag = `h${level}` as React.ElementType;
+                    return <Tag key={idx} className={sizeClasses[level] || sizeClasses[3]}>{text}</Tag>;
+                }
 
-            if (node.type === "paragraph") {
-                const text = extractText(node);
-                return <p key={idx} className="mt-6 leading-relaxed text-muted-foreground">{text}</p>;
-            }
+                if (node.type === "paragraph") {
+                    const text = extractText(node);
+                    return <p key={idx} className="mt-6 leading-relaxed text-muted-foreground">{text}</p>;
+                }
 
-            if (node.type === "codeBlock") {
-                const code = extractText(node);
-                return (
-                    <pre key={idx} className="mt-6 overflow-x-auto border-2 border-border bg-muted p-4 text-sm font-mono">
-                        <code>{code}</code>
-                    </pre>
-                );
-            }
+                if (node.type === "bulletList") {
+                    return (
+                        <ul key={idx} className="list-disc pl-6 my-4 space-y-2">
+                            {renderNodes(node.content || [])}
+                        </ul>
+                    );
+                }
 
-            if (node.type === "blockquote") {
-                const text = extractText(node);
-                return (
-                    <blockquote key={idx} className="mt-8 border-l-4 border-primary bg-muted px-6 py-4 text-lg italic">
-                        {text}
-                    </blockquote>
-                );
-            }
+                if (node.type === "orderedList") {
+                    return (
+                        <ol key={idx} className="list-decimal pl-6 my-4 space-y-2">
+                            {renderNodes(node.content || [])}
+                        </ol>
+                    );
+                }
 
-            return null;
-        });
+                if (node.type === "listItem") {
+                    return (
+                        <li key={idx} className="my-2 leading-relaxed text-muted-foreground">
+                            {node.content ? renderNodes(node.content) : extractText(node)}
+                        </li>
+                    );
+                }
+
+                if (node.type === "codeBlock") {
+                    const code = extractText(node);
+                    return (
+                        <pre key={idx} className="mt-6 overflow-x-auto border-2 border-border bg-muted p-4 text-sm font-mono">
+                            <code>{code}</code>
+                        </pre>
+                    );
+                }
+
+                if (node.type === "blockquote") {
+                    const text = extractText(node);
+                    return (
+                        <blockquote key={idx} className="mt-8 border-l-4 border-primary bg-muted px-6 py-4 text-lg italic">
+                            {text}
+                        </blockquote>
+                    );
+                }
+
+                return null;
+            });
+        };
+
+        return renderNodes(content);
     } catch {
         return <p className="text-muted-foreground">콘텐츠를 표시할 수 없습니다.</p>;
     }
