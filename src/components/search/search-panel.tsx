@@ -6,6 +6,7 @@ import { Loader2, Search, Sparkles } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/api-client";
+import { extractTextFromNovelContent } from "@/lib/utils";
 
 type SearchResult = {
     slug: string;
@@ -213,7 +214,7 @@ export function SearchPanel({ initialQuery = "", autoFocus, onNavigate }: Search
                                     </div>
                                     <h3 className="mt-2 text-lg font-semibold text-foreground">{result.title}</h3>
                                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                                        {result.description}
+                                        {extractTextFromNovelContent(result.description)}
                                     </p>
                                 </Link>
                             </li>
