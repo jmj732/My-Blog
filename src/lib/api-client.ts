@@ -47,7 +47,14 @@ export async function apiRequest<T>(path: string, init?: ApiRequestOptions): Pro
 
     let body: ApiResponse<T> | T | null = null;
     try {
-        body = await response.json();
+        // Parse JSON with big number handling to prevent precision loss
+        // Snowflake IDs are 18+ digits which exceed JavaScript's safe integer limit
+        const text = await response.text();
+        const safeText = text.replace(
+            /:(\s*)(\d{15,})(\s*)([,\}])/g,
+            ':"$2"$3$4'
+        );
+        body = JSON.parse(safeText);
     } catch {
         body = null;
     }
