@@ -77,9 +77,11 @@ export function Header() {
                     <Link href="/community" className="hover:text-primary transition-colors">
                         커뮤니티
                     </Link>
-                    <Link href="/write" className="hover:text-primary transition-colors">
-                        글쓰기
-                    </Link>
+                    {user?.role === "ADMIN" && (
+                        <Link href="/write" className="hover:text-primary transition-colors">
+                            글쓰기
+                        </Link>
+                    )}
                     <Link href="/about" className="hover:text-primary transition-colors">
                         소개
                     </Link>
