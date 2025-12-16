@@ -29,6 +29,7 @@ export async function getPosts(page: number = 1, pageSize: number = 20): Promise
     const params = new URLSearchParams({
         page: String(Math.max(page - 1, 0)),
         pageSize: String(pageSize),
+        type: "admin",
     });
 
     const data = await apiRequest<{
@@ -55,10 +56,10 @@ export async function getPosts(page: number = 1, pageSize: number = 20): Promise
         createdAt: p.createdAt ? new Date(p.createdAt) : null,
         author: p.authorName
             ? {
-                  name: p.authorName,
-                  email: "",
-                  role: p.authorRole ?? "user",
-              }
+                name: p.authorName,
+                email: "",
+                role: p.authorRole ?? "user",
+            }
             : null,
     }));
 
@@ -105,10 +106,10 @@ export async function getCommunityPosts(page: number = 1, pageSize: number = 20)
         createdAt: p.createdAt ? new Date(p.createdAt) : null,
         author: p.authorName
             ? {
-                  name: p.authorName,
-                  email: "",
-                  role: p.authorRole ?? "user",
-              }
+                name: p.authorName,
+                email: "",
+                role: p.authorRole ?? "user",
+            }
             : null,
     }));
 
@@ -145,10 +146,10 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
         createdAt: data.createdAt ? new Date(data.createdAt) : null,
         author: data.authorName
             ? {
-                  name: data.authorName,
-                  email: "",
-                  role: data.authorRole ?? "user",
-              }
+                name: data.authorName,
+                email: "",
+                role: data.authorRole ?? "user",
+            }
             : null,
     };
 }
@@ -182,10 +183,10 @@ export async function getRecentPosts(limit: number = 5): Promise<Post[]> {
         createdAt: p.createdAt ? new Date(p.createdAt) : null,
         author: p.authorName
             ? {
-                  name: p.authorName,
-                  email: "",
-                  role: p.authorRole ?? "user",
-              }
+                name: p.authorName,
+                email: "",
+                role: p.authorRole ?? "user",
+            }
             : null,
     }));
 }
