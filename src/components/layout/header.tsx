@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button";
 import { SearchDialogButton } from "@/components/search/search-dialog-button";
 import { useAuth } from "@/components/auth/auth-provider";
 
-const BACKEND_LOGIN_URL = "https://gc-board-latest-1.onrender.com/oauth2/authorization/github";
-
 export function Header() {
     const { user, loading, logout } = useAuth();
 
@@ -47,7 +45,7 @@ export function Header() {
         }
 
         return (
-            <Link href={BACKEND_LOGIN_URL}>
+            <Link href="/api/auth/login">
                 <Button className="bg-primary text-primary-foreground hover:opacity-90 rounded-none font-bold">
                     로그인
                 </Button>
