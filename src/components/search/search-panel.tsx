@@ -80,6 +80,7 @@ export function SearchPanel({ initialQuery = "", autoFocus, onNavigate }: Search
                 try {
                     setIsModelLoading(true);
                     embedding = await embeddingService.generateEmbedding(query);
+                    console.log("Client-side embedding generated:", embedding?.length, "dimensions");
                 } catch (e) {
                     console.error("Embedding generation failed:", e);
                     // Continue without embedding (backend might fallback to keyword search)

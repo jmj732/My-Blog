@@ -1,4 +1,8 @@
-import { pipeline, PipelineType } from "@xenova/transformers";
+import { pipeline, PipelineType, env } from "@xenova/transformers";
+
+// Skip local model checks and use remote models only
+env.allowLocalModels = false;
+env.useBrowserCache = true;
 
 // Use a singleton pattern to ensure the model is loaded only once
 class EmbeddingService {
