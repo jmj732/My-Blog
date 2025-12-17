@@ -12,6 +12,8 @@ import { Placeholder } from "novel";
 import { cx } from "class-variance-authority";
 import { SlashCommand, slashCommand } from "./slash-command";
 import { apiRequest } from "@/lib/api-client";
+import { extractTextFromNovelContent } from "@/lib/utils";
+import { embeddingService } from "@/lib/client-embedding";
 
 // Note: Drag & drop is built into Novel's StarterKit via TipTap extensions
 const extensions = [
@@ -143,6 +145,9 @@ export function WritePageClient({
                 body: JSON.stringify({
                     title,
                     content: JSON.stringify(content), // Serialize JSONContent
+                    embedding: await embeddingService.generateEmbedding(
+                        extractTextFromNovelContent(content)
+                    ),
                 }),
                 useProxy: true,
             });
