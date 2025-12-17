@@ -13,6 +13,7 @@ export interface LocalPost {
     createdAt?: Date;
     hash: string; // Content hash for diffing
     embedding?: number[];
+    id?: string | number;
 }
 
 export class LocalPostManager {
@@ -70,7 +71,8 @@ export class LocalPostManager {
                 content, // Raw markdown content
                 authorId: data.authorId,
                 createdAt: data.date ? new Date(data.date) : undefined,
-                hash: this.calculateHash(content, data.title || slug)
+                hash: this.calculateHash(content, data.title || slug),
+                id: data.id
             });
         }
 

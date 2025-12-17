@@ -2,7 +2,8 @@
 slug: hello-world
 title: Hello World from Local Sync
 date: 2025-12-17
-authorId: 1
+id: 123456789012345678
+authorId: "259232061308850176"
 ---
 
 # Hello World

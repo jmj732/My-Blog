@@ -8,7 +8,7 @@ import { LocalPostManager, LocalPost } from "@/lib/local-posts";
 dotenv.config({ path: ".env.local" });
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "https://gc-board-latest-1.onrender.com").replace(/\/$/, "");
-const SYNC_TOKEN = process.env.SYNC_TOKEN;
+const SYNC_TOKEN = process.env.POST_SYNC_TOKEN || process.env.SYNC_TOKEN;
 const JWT_TOKEN = process.env.JWT_TOKEN;
 
 // Temporary path to posts - adjust as needed
@@ -59,6 +59,8 @@ async function main() {
     }
 
     console.log(`Starting sync to ${API_BASE_URL}... ${isDryRun ? "(DRY RUN)" : ""}`);
+    if (SYNC_TOKEN) console.log(`Using SYNC_TOKEN: ${SYNC_TOKEN.slice(0, 5)}...`);
+    else console.log("No SYNC_TOKEN found.");
 
     // 1. Load local posts
     const manager = new LocalPostManager(POSTS_DIR);
@@ -120,7 +122,8 @@ async function main() {
             content: p.content,
             authorId: p.authorId, // Optional
             createdAt: p.createdAt ? p.createdAt.toISOString() : undefined,
-            embedding: p.embedding
+            embedding: p.embedding,
+            id: p.id
         }))
     };
 
@@ -128,8 +131,8 @@ async function main() {
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
     };
-    if (SYNC_TOKEN) headers["X-Sync-Token"] = SYNC_TOKEN;
-    if (JWT_TOKEN) headers["Authorization"] = `Bearer ${JWT_TOKEN}`;
+    if (SYNC_TOKEN) headers["Authorization"] = `Bearer ${SYNC_TOKEN}`;
+    // if (JWT_TOKEN) headers["Authorization"] = `Bearer ${JWT_TOKEN}`; // JWT disabled in favor of Sync Token
 
     try {
         const response = await fetch(`${API_BASE_URL}/api/v1/posts/sync`, {

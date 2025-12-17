@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",
+    "postbuild": "npm run sync-posts",
     "start": "next start",
     "lint": "eslint",
     "keep-alive": "tsx scripts/keep-alive.ts",
