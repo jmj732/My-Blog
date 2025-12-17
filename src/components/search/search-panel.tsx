@@ -7,6 +7,7 @@ import { Loader2, Search, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/api-client";
 import { extractTextFromNovelContent } from "@/lib/utils";
+import { embeddingService } from "@/lib/client-embedding";
 
 type SearchResult = {
     slug: string;
@@ -35,6 +36,7 @@ export function SearchPanel({ initialQuery = "", autoFocus, onNavigate }: Search
     const [error, setError] = useState<string | null>(null);
     const [usedFallback, setUsedFallback] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
+    const [isModelLoading, setIsModelLoading] = useState(false);
     const abortRef = useRef<AbortController | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -73,11 +75,30 @@ export function SearchPanel({ initialQuery = "", autoFocus, onNavigate }: Search
             abortRef.current = controller;
 
             try {
+                // Generate embedding client-side
+                let embedding: number[] | undefined;
+                try {
+                    setIsModelLoading(true);
+                    embedding = await embeddingService.generateEmbedding(query);
+                } catch (e) {
+                    console.error("Embedding generation failed:", e);
+                    // Continue without embedding (backend might fallback to keyword search)
+                } finally {
+                    setIsModelLoading(false);
+                }
+
+                if (controller.signal.aborted) return;
+
                 const payload = await apiRequest<{
                     results: SearchResult[];
                     fallback?: boolean;
                     error?: string;
-                }>(`/api/v1/search?q=${encodeURIComponent(query)}`, {
+                }>(`/api/v1/search`, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        q: query,
+                        embedding,
+                    }),
                     signal: controller.signal,
                 });
 
@@ -108,8 +129,11 @@ export function SearchPanel({ initialQuery = "", autoFocus, onNavigate }: Search
         if (!query) {
             return "Search MDX posts semantically. Try “vector search” or “NextAuth tips”.";
         }
+        if (isModelLoading) {
+            return "Loading AI model for semantic search...";
+        }
         if (isLoading) {
-            return "Generating embeddings and looking for matches...";
+            return "Searching for matches...";
         }
         if (usedFallback) {
             return "Vector search is warming up. Showing lexical matches for now.";
