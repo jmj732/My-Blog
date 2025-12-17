@@ -61,7 +61,7 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
                 {posts.map((post) => (
                     <Link
                         key={post.id}
-                        href={`/posts/${post.slug}`}
+                        href={`/community/posts/${encodeURIComponent(post.slug)}`}
                         className="group border-2 border-border bg-card p-6 transition-all duration-300 hover:border-primary"
                     >
                         <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">

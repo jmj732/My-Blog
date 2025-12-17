@@ -8,22 +8,44 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/api-client";
 
+type PostActionVariant = "posts" | "community";
+
 type PostActionsProps = {
     slug: string;
+    variant?: PostActionVariant;
 };
 
-export function PostActions({ slug }: PostActionsProps) {
+function getVariantConfig(variant: PostActionVariant) {
+    if (variant === "community") {
+        return {
+            editHrefPrefix: "/community/write",
+            deleteEndpointPrefix: "/api/v1/community/posts",
+            afterDeleteHref: "/community",
+        };
+    }
+    return {
+        editHrefPrefix: "/write",
+        deleteEndpointPrefix: "/api/v1/posts",
+        afterDeleteHref: "/posts",
+    };
+}
+
+export function PostActions({ slug, variant = "posts" }: PostActionsProps) {
     const router = useRouter();
     const [isDeleting, setIsDeleting] = useState(false);
+    const config = getVariantConfig(variant);
 
     const handleDelete = async () => {
         if (!confirm("정말로 이 글을 삭제하시겠습니까?")) return;
 
         setIsDeleting(true);
         try {
-            await apiRequest<void>(`/api/v1/posts/${encodeURIComponent(slug)}`, { method: "DELETE", useProxy: true });
+            await apiRequest<void>(
+                `${config.deleteEndpointPrefix}/${encodeURIComponent(slug)}`,
+                { method: "DELETE", useProxy: true }
+            );
             alert("글이 삭제되었습니다.");
-            router.push("/posts");
+            router.push(config.afterDeleteHref);
         } catch (error) {
             console.error("delete failed", error);
             alert("삭제에 실패했습니다. 다시 시도해주세요.");
@@ -34,7 +56,7 @@ export function PostActions({ slug }: PostActionsProps) {
 
     return (
         <div className="mt-6 flex flex-wrap gap-3">
-            <Link href={`/write/${slug}`}>
+            <Link href={`${config.editHrefPrefix}/${encodeURIComponent(slug)}`}>
                 <Button variant="outline" className="border-2 border-border rounded-none">
                     <Pencil className="mr-2 h-4 w-4" />
                     수정

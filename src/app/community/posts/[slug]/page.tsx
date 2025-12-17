@@ -1,11 +1,11 @@
-import React from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getPostBySlug } from "@/lib/posts";
+
 import { hasAdminRole } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/current-user";
+import { getPostBySlug } from "@/lib/posts";
 import CommentSection from "@/components/comments/comment-section";
 import { PostActions } from "@/components/posts/post-actions";
 
@@ -37,79 +37,51 @@ function extractText(node?: NovelNode): string {
     return "";
 }
 
-// Helper to render Novel JSON content
 function renderNovelContent(jsonString: string) {
     try {
         const parsed = JSON.parse(jsonString) as NovelDocument;
-        const content = Array.isArray(parsed.content) ? parsed.content : [];
+        const nodes = Array.isArray(parsed.content) ? parsed.content : [];
 
-        const renderNodes = (nodes: NovelNode[]): React.ReactNode[] => {
-            return nodes.map((node, idx) => {
-                if (node.type === "heading") {
-                    const text = extractText(node);
-                    const level = node.attrs?.level ?? 1;
-                    const sizeClasses: Record<number, string> = {
-                        1: "text-4xl font-black uppercase tracking-tighter mt-8",
-                        2: "text-3xl font-bold uppercase tracking-tight mt-10",
-                        3: "text-2xl font-bold uppercase tracking-tight mt-8",
-                    };
+        return nodes.map((node, idx) => {
+            if (node.type === "heading") {
+                const text = extractText(node);
+                const level = node.attrs?.level ?? 1;
+                const sizeClasses: Record<number, string> = {
+                    1: "text-4xl font-black uppercase tracking-tighter mt-8",
+                    2: "text-3xl font-bold uppercase tracking-tight mt-10",
+                    3: "text-2xl font-bold uppercase tracking-tight mt-8",
+                };
 
-                    const Tag = `h${level}` as React.ElementType;
-                    return <Tag key={idx} className={sizeClasses[level] || sizeClasses[3]}>{text}</Tag>;
-                }
+                if (level === 1) return <h1 key={idx} className={sizeClasses[1]}>{text}</h1>;
+                if (level === 2) return <h2 key={idx} className={sizeClasses[2]}>{text}</h2>;
+                if (level === 3) return <h3 key={idx} className={sizeClasses[3]}>{text}</h3>;
+            }
 
-                if (node.type === "paragraph") {
-                    const text = extractText(node);
-                    return <p key={idx} className="mt-6 leading-relaxed text-muted-foreground">{text}</p>;
-                }
+            if (node.type === "paragraph") {
+                const text = extractText(node);
+                return <p key={idx} className="mt-6 leading-relaxed text-muted-foreground">{text}</p>;
+            }
 
-                if (node.type === "bulletList") {
-                    return (
-                        <ul key={idx} className="list-disc pl-6 my-4 space-y-2">
-                            {renderNodes(node.content || [])}
-                        </ul>
-                    );
-                }
+            if (node.type === "codeBlock") {
+                const code = extractText(node);
+                return (
+                    <pre key={idx} className="mt-6 overflow-x-auto border-2 border-border bg-muted p-4 text-sm font-mono">
+                        <code>{code}</code>
+                    </pre>
+                );
+            }
 
-                if (node.type === "orderedList") {
-                    return (
-                        <ol key={idx} className="list-decimal pl-6 my-4 space-y-2">
-                            {renderNodes(node.content || [])}
-                        </ol>
-                    );
-                }
+            if (node.type === "blockquote") {
+                const text = extractText(node);
+                return (
+                    <blockquote key={idx} className="mt-8 border-l-4 border-primary bg-muted px-6 py-4 text-lg italic">
+                        {text}
+                    </blockquote>
+                );
+            }
 
-                if (node.type === "listItem") {
-                    return (
-                        <li key={idx} className="my-2 leading-relaxed text-muted-foreground">
-                            {node.content ? renderNodes(node.content) : extractText(node)}
-                        </li>
-                    );
-                }
-
-                if (node.type === "codeBlock") {
-                    const code = extractText(node);
-                    return (
-                        <pre key={idx} className="mt-6 overflow-x-auto border-2 border-border bg-muted p-4 text-sm font-mono">
-                            <code>{code}</code>
-                        </pre>
-                    );
-                }
-
-                if (node.type === "blockquote") {
-                    const text = extractText(node);
-                    return (
-                        <blockquote key={idx} className="mt-8 border-l-4 border-primary bg-muted px-6 py-4 text-lg italic">
-                            {text}
-                        </blockquote>
-                    );
-                }
-
-                return null;
-            });
-        };
-
-        return renderNodes(content);
+            return null;
+        });
     } catch {
         return <p className="text-muted-foreground">콘텐츠를 표시할 수 없습니다.</p>;
     }
@@ -140,7 +112,7 @@ export async function generateMetadata({
 
 export const dynamic = "force-dynamic";
 
-export default async function PostPage({ params }: { params: ParamsPromise }) {
+export default async function CommunityPostPage({ params }: { params: ParamsPromise }) {
     const { slug } = await params;
     const post = await getPostBySlug(slug);
 
@@ -148,7 +120,6 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
         notFound();
     }
 
-    // Get current user and check permissions
     const user = await getCurrentUser();
     const isAdmin = hasAdminRole(user?.role, (user as { roles?: unknown })?.roles);
     const postAuthorId = post.authorId || post.author?.id || "";
@@ -159,11 +130,11 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
     return (
         <article className="container max-w-3xl py-16">
             <Link
-                href="/posts"
+                href="/community"
                 className="inline-flex items-center text-sm text-muted-foreground transition hover:text-primary font-bold"
             >
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                포스트 목록으로
+                커뮤니티 목록으로
             </Link>
 
             <header className="mt-6 space-y-4">
@@ -183,7 +154,7 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
                 <h1 className="text-4xl font-black tracking-tighter md:text-5xl uppercase">
                     {post.title}
                 </h1>
-                {canEdit && <PostActions slug={post.slug} />}
+                {canEdit && <PostActions slug={post.slug} variant="community" />}
             </header>
 
             <div className="mt-10 border-t-2 border-border pt-10 leading-relaxed">
@@ -194,3 +165,4 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
         </article>
     );
 }
+

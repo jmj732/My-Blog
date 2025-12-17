@@ -75,6 +75,10 @@ interface WritePageClientProps {
         content: string;
     };
     apiEndpoint?: string; // Custom API endpoint for creating posts
+    editApiEndpoint?: string; // Base endpoint for editing/deleting a post (e.g. /api/v1/posts or /api/v1/community/posts)
+    viewPathPrefix?: string; // Where to navigate after save (e.g. /posts or /community/posts)
+    afterDeleteHref?: string; // Where to navigate after delete (e.g. /posts or /community)
+    backHref?: string; // Header back button target
 }
 
 function parseInitialContent(raw?: string): JSONContent | undefined {
@@ -86,7 +90,19 @@ function parseInitialContent(raw?: string): JSONContent | undefined {
     }
 }
 
-export function WritePageClient({ user: propUser, initialPost, apiEndpoint = "/api/v1/posts" }: WritePageClientProps) {
+function joinPrefix(prefix: string, slug: string) {
+    return `${prefix.replace(/\/$/, "")}/${encodeURIComponent(slug)}`;
+}
+
+export function WritePageClient({
+    user: propUser,
+    initialPost,
+    apiEndpoint = "/api/v1/posts",
+    editApiEndpoint,
+    viewPathPrefix = "/posts",
+    afterDeleteHref = "/posts",
+    backHref = "/",
+}: WritePageClientProps) {
     const { user: authUser } = useAuth();
     // Prioritize authUser (client-side), fallback to propUser (server-side if provided), then Guest
     const currentUser = authUser || propUser;
@@ -101,6 +117,7 @@ export function WritePageClient({ user: propUser, initialPost, apiEndpoint = "/a
     const [isDeleting, setIsDeleting] = useState(false);
 
     const isEditing = Boolean(initialPost);
+    const editBaseEndpoint = (editApiEndpoint ?? apiEndpoint).replace(/\/$/, "");
 
     useEffect(() => {
         if (initialPost) {
@@ -118,7 +135,9 @@ export function WritePageClient({ user: propUser, initialPost, apiEndpoint = "/a
         setIsSaving(true);
         try {
             const isEdit = Boolean(isEditing && initialPost?.slug);
-            const endpoint = isEdit ? `/api/v1/posts/${initialPost?.slug}` : apiEndpoint;
+            const endpoint = isEdit
+                ? `${editBaseEndpoint}/${encodeURIComponent(initialPost!.slug)}`
+                : apiEndpoint;
             const data = await apiRequest<{ slug?: string }>(endpoint, {
                 method: isEdit ? "PATCH" : "POST",
                 body: JSON.stringify({
@@ -128,7 +147,12 @@ export function WritePageClient({ user: propUser, initialPost, apiEndpoint = "/a
                 useProxy: true,
             });
             alert(isEdit ? "글이 수정되었습니다!" : "글이 성공적으로 저장되었습니다!");
-            router.push(`/posts/${data?.slug ?? initialPost?.slug}`);
+            const nextSlug = data?.slug ?? initialPost?.slug;
+            if (nextSlug) {
+                router.push(joinPrefix(viewPathPrefix, nextSlug));
+            } else {
+                router.push(viewPathPrefix);
+            }
         } catch (error) {
             console.error("Save failed:", error);
             alert("저장에 실패했습니다. 다시 시도해주세요.");
@@ -143,13 +167,13 @@ export function WritePageClient({ user: propUser, initialPost, apiEndpoint = "/a
 
         setIsDeleting(true);
         try {
-            await apiRequest<void>(`/api/v1/posts/${initialPost.slug}`, {
+            await apiRequest<void>(`${editBaseEndpoint}/${encodeURIComponent(initialPost.slug)}`, {
                 method: "DELETE",
                 useProxy: true,
             });
 
             alert("글이 삭제되었습니다.");
-            router.push("/posts");
+            router.push(afterDeleteHref);
         } catch (error) {
             console.error("Delete failed:", error);
             alert("삭제에 실패했습니다. 다시 시도해주세요.");
@@ -164,7 +188,7 @@ export function WritePageClient({ user: propUser, initialPost, apiEndpoint = "/a
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
-                        <Link href="/">
+                        <Link href={backHref}>
                             <Button variant="ghost" size="icon" className="hover:bg-muted">
                                 <ArrowLeft className="w-5 h-5" />
                             </Button>
