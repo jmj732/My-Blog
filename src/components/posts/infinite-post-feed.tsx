@@ -77,8 +77,7 @@ export function InfinitePostFeed({
             });
 
             const data = await apiRequest<CursorPostsResponse>(
-                `/api/v1/posts/cursor?${params.toString()}`,
-                { useProxy: true }
+                `/api/v1/posts/cursor?${params.toString()}`
             );
 
             setRows((prev) => prev.concat(data.rows ?? []));
