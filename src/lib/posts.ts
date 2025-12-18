@@ -24,6 +24,24 @@ export interface PaginatedPosts {
     totalPages: number;
 }
 
+export type PostCursor = {
+    createdAt: string;
+    id: string;
+};
+
+export type CursorPostRow = {
+    id: string;
+    slug: string;
+    title: string;
+    createdAt: string | null;
+    authorId?: string;
+};
+
+export type CursorPostsResponse = {
+    rows: CursorPostRow[];
+    nextCursor: PostCursor | null;
+};
+
 type BackendAuthor = {
     id?: number | string;
     name?: string | null;
@@ -33,13 +51,17 @@ type BackendAuthor = {
 
 function extractAuthorId(payload: {
     authorId?: number | string;
+    author_id?: number | string;
     userId?: number | string;
+    user_id?: number | string;
     author?: BackendAuthor | null;
     user?: BackendAuthor | null;
 }): string {
     const direct =
         payload.authorId ??
+        payload.author_id ??
         payload.userId ??
+        payload.user_id ??
         payload.author?.id ??
         payload.user?.id;
     return direct !== undefined && direct !== null ? String(direct) : "";
@@ -212,6 +234,60 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
             email: "",
             role: extractAuthorRole(data),
         },
+    };
+}
+
+function normalizeCursor(cursor?: { createdAt?: string | null; id?: number | string | null } | null): PostCursor | null {
+    if (!cursor?.createdAt || cursor.id === undefined || cursor.id === null) return null;
+    return { createdAt: cursor.createdAt, id: String(cursor.id) };
+}
+
+/**
+ * Get cursor-paginated posts from backend API
+ * Uses: GET /api/v1/posts/cursor?limit=&cursorCreatedAt=&cursorId=&type=
+ */
+export async function getCursorPosts(options: {
+    type?: "admin" | "community";
+    limit?: number;
+    cursor?: PostCursor | null;
+}): Promise<CursorPostsResponse> {
+    const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
+    const params = new URLSearchParams({
+        limit: String(limit),
+    });
+
+    if (options.type) {
+        params.set("type", options.type);
+    }
+
+    if (options.cursor) {
+        params.set("cursorCreatedAt", options.cursor.createdAt);
+        params.set("cursorId", options.cursor.id);
+    }
+
+    const data = await apiRequest<{
+        rows: {
+            id: number | string;
+            slug: string;
+            title: string;
+            createdAt?: string;
+            authorId?: number | string;
+            author_id?: number | string;
+        }[];
+        nextCursor?: { createdAt?: string; id?: number | string } | null;
+    }>(`/api/v1/posts/cursor?${params.toString()}`);
+
+    const rows: CursorPostRow[] = (data?.rows ?? []).map((row) => ({
+        id: String(row.id),
+        slug: row.slug,
+        title: row.title,
+        createdAt: row.createdAt ?? null,
+        authorId: extractAuthorId(row),
+    }));
+
+    return {
+        rows,
+        nextCursor: normalizeCursor(data?.nextCursor ?? null),
     };
 }
 

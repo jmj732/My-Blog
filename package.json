@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "keep-alive": "tsx scripts/keep-alive.ts",
+    "seed-posts": "node scripts/seed-posts.js",
     "sync-posts": "tsx scripts/sync-posts.ts",
     "watch-posts": "tsx scripts/watch-posts.ts"
   },
